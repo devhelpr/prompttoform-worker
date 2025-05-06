@@ -19,7 +19,7 @@
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
-		const allowedOrigin = ['https://prompttotorm.ai'];
+		const allowedOrigin = ['http://localhost']; //['https://prompttotorm.ai'];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
 		const origin = 'http://localhost'; //request.headers.get('Origin') ||
