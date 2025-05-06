@@ -22,7 +22,7 @@ export default {
 		const allowedOrigin = ['https://prompttotorm.ai'];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
-		const origin = request.headers.get('Origin') || 'http://localhost';
+		const origin = 'http://localhost'; //request.headers.get('Origin') ||
 		const clientAuth = request.headers.get('Authorization');
 
 		if (!isDev && !allowedOrigin.find((o) => o.startsWith(origin))) {
