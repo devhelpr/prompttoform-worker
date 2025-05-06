@@ -30,7 +30,7 @@ export default {
 		}
 
 		let headers = {};
-		const originUrl = new URL(origin);
+		//const originUrl = new URL(origin);
 		//const originHost = `${originUrl.protocol}//${originUrl.hostname}`;
 
 		if (request.method === 'OPTIONS') {
