@@ -11,50 +11,37 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-// export default {
-// 	async fetch(request, env, ctx): Promise<Response> {
-// 		return new Response('Hello World!');
-// 	},
-// } satisfies ExportedHandler<Env>;
-
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
-		const allowedOrigin = ['http://localhost']; //['https://prompttotorm.ai'];
+		const allowedOrigin = ['https://prompttotorm.ai'];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
-		const origin = 'http://localhost'; //request.headers.get('Origin') ||
+		const origin = request.headers.get('Origin') || '';
 		const clientAuth = request.headers.get('Authorization');
 
 		if (!isDev && !allowedOrigin.find((o) => o.startsWith(origin))) {
 			return new Response('Forbidden: invalid origin', { status: 403 });
 		}
 
-		let headers = {};
-		//const originUrl = new URL(origin);
-		//const originHost = `${originUrl.protocol}//${originUrl.hostname}`;
-
+		const corsHeaders = {
+			'Access-Control-Allow-Origin': origin,
+			'Access-Control-Allow-Headers': '*',
+			'Access-Control-Allow-Methods': '*',
+		};
 		if (request.method === 'OPTIONS') {
 			return new Response(null, {
 				status: 204,
 				headers: {
-					'Access-Control-Allow-Origin': '*',
-					'Access-Control-Allow-Methods': '*',
-					'Access-Control-Allow-Headers': '*',
+					...corsHeaders,
 				},
 			});
 		}
-
-		headers = {
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Headers': '*',
-			'Access-Control-Allow-Methods': '*',
-		};
 
 		const apiUrl = request.headers.get('api-url');
 		const path = request.headers.get('api-path');
 
 		if (!apiUrl || !path) {
-			throw new Error(`Missing x-api-url or x-path ${apiUrl} ${path}`);
+			throw new Error(`Missing api-url or api-path ${apiUrl} ${path}`);
 		}
 
 		const proxyRequest = new Request(`${apiUrl}/${path}`, {
@@ -72,7 +59,7 @@ export default {
 				status: response.status,
 				headers: {
 					'Content-Type': response.headers.get('Content-Type') || 'application/json',
-					...headers,
+					...corsHeaders,
 				},
 			});
 		} catch (err) {
