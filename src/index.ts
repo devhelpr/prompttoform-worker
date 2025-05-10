@@ -17,7 +17,19 @@ export default {
 		const isDev = env.WRANGLER_ENV === 'dev';
 
 		const origin = request.headers.get('Origin') || '';
-		const clientAuth = request.headers.get('Authorization');
+		let clientAuth = request.headers.get('Authorization') ?? undefined;
+		const systemKey = request.headers.get('system-key');
+		let addkeyToUrl = false;
+		let useSystemKey = false;
+
+		if (systemKey === 'openai') {
+			clientAuth = `Bearer ${env.OPENAI_APIKEY}`;
+			useSystemKey = true;
+		} else if (systemKey === 'gemini') {
+			clientAuth = env.GEMINI_APIKEY;
+			addkeyToUrl = true;
+			useSystemKey = true;
+		}
 
 		if (!isDev && !allowedOrigin.find((o) => o.startsWith(origin))) {
 			return new Response('Forbidden: invalid origin', { status: 403 });
@@ -37,19 +49,29 @@ export default {
 			});
 		}
 
-		const apiUrl = request.headers.get('api-url');
+		let apiUrl = request.headers.get('api-url');
 		const path = request.headers.get('api-path');
 
 		if (!apiUrl || !path) {
 			throw new Error(`Missing api-url or api-path ${apiUrl} ${path}`);
 		}
 
-		const proxyRequest = new Request(`${apiUrl}/${path}`, {
+		const apiPath = path !== '-' ? `/${path}` : '';
+
+		const headers: Record<string, string> = {
+			'Content-Type': 'application/json',
+		};
+
+		if (clientAuth && !addkeyToUrl) {
+			headers['Authorization'] = clientAuth;
+		}
+		if (addkeyToUrl && useSystemKey) {
+			apiUrl = `${apiUrl}${clientAuth}`;
+		}
+
+		const proxyRequest = new Request(`${apiUrl}${apiPath}`, {
 			method: request.method,
-			headers: {
-				Authorization: clientAuth || '',
-				'Content-Type': 'application/json',
-			},
+			headers,
 			body: request.body,
 		});
 
