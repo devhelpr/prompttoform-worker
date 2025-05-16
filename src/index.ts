@@ -13,7 +13,7 @@
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
-		const allowedOrigin = ['https://app.prompttoform.ai/'];
+		const allowedOrigin = ['https://app.prompttoform.ai/', 'https://demo.codeflowcanvas.io/', 'https://ocif-generator.vercel.app/'];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
 		const origin = request.headers.get('Origin') || '';
