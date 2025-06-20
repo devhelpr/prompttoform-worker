@@ -40,6 +40,7 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		const redirectUrl = new URL('https://demo.codeflowcanvas.io');
 		redirectUrl.searchParams.set('auth', 'success');
 		redirectUrl.searchParams.set('provider', 'netlify');
+		redirectUrl.searchParams.set('access_token', tokenResponse.access_token); //temp
 
 		// Optionally include the state parameter if it was provided
 		if (state) {
