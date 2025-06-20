@@ -11,8 +11,19 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import { handleNetlifyAuth } from './netlify';
+
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
+		const url = new URL(request.url);
+		const path = url.pathname;
+
+		// Route to Netlify OAuth handler
+		if (path === '/netlify/auth') {
+			return handleNetlifyAuth(request, env);
+		}
+
+		// Existing proxy functionality
 		const allowedOrigin = ['https://app.prompttoform.ai/', 'https://demo.codeflowcanvas.io/', 'https://ocif-generator.vercel.app/'];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
@@ -50,13 +61,13 @@ export default {
 		}
 
 		let apiUrl = request.headers.get('api-url');
-		const path = request.headers.get('api-path');
+		const apiPath = request.headers.get('api-path');
 
-		if (!apiUrl || !path) {
-			throw new Error(`Missing api-url or api-path ${apiUrl} ${path}`);
+		if (!apiUrl || !apiPath) {
+			throw new Error(`Missing api-url or api-path ${apiUrl} ${apiPath}`);
 		}
 
-		const apiPath = path !== '-' ? `/${path}` : '';
+		const pathSegment = apiPath !== '-' ? `/${apiPath}` : '';
 
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
@@ -69,7 +80,7 @@ export default {
 			apiUrl = `${apiUrl}${clientAuth}`;
 		}
 
-		const proxyRequest = new Request(`${apiUrl}${apiPath}`, {
+		const proxyRequest = new Request(`${apiUrl}${pathSegment}`, {
 			method: request.method,
 			headers,
 			body: request.body,

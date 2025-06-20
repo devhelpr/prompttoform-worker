@@ -1,0 +1,88 @@
+/**
+ * Netlify OAuth Handler
+ * Handles the OAuth callback from Netlify after user authentication
+ */
+
+export async function handleNetlifyAuth(request: Request, env: Env): Promise<Response> {
+	const url = new URL(request.url);
+	const code = url.searchParams.get('code');
+	const state = url.searchParams.get('state');
+	const error = url.searchParams.get('error');
+
+	// Handle OAuth errors
+	if (error) {
+		return new Response(`OAuth Error: ${error}`, {
+			status: 400,
+			headers: {
+				'Content-Type': 'text/plain',
+			},
+		});
+	}
+
+	// Check if we have the authorization code
+	if (!code) {
+		return new Response('Missing authorization code', {
+			status: 400,
+			headers: {
+				'Content-Type': 'text/plain',
+			},
+		});
+	}
+
+	try {
+		// Exchange the authorization code for an access token
+		const tokenResponse = await exchangeCodeForToken(code, env);
+
+		// Store the access token (you might want to store this in a database or KV store)
+		// For now, we'll just redirect with success
+
+		// Redirect to demo.codeflowcanvas.io with success
+		const redirectUrl = new URL('https://demo.codeflowcanvas.io');
+		redirectUrl.searchParams.set('auth', 'success');
+		redirectUrl.searchParams.set('provider', 'netlify');
+
+		// Optionally include the state parameter if it was provided
+		if (state) {
+			redirectUrl.searchParams.set('state', state);
+		}
+
+		return Response.redirect(redirectUrl.toString(), 302);
+	} catch (error) {
+		console.error('Error exchanging code for token:', error);
+
+		// Redirect to demo.codeflowcanvas.io with error
+		const redirectUrl = new URL('https://demo.codeflowcanvas.io');
+		redirectUrl.searchParams.set('auth', 'error');
+		redirectUrl.searchParams.set('provider', 'netlify');
+		redirectUrl.searchParams.set('error', 'token_exchange_failed');
+
+		return Response.redirect(redirectUrl.toString(), 302);
+	}
+}
+
+async function exchangeCodeForToken(code: string, env: Env): Promise<any> {
+	const tokenUrl = 'https://api.netlify.com/oauth/token';
+
+	const body = new URLSearchParams({
+		grant_type: 'authorization_code',
+		code: code,
+		client_id: env.NETLIFY_CLIENT_ID,
+		client_secret: env.NETLIFY_CLIENT_SECRET,
+		redirect_uri: env.NETLIFY_REDIRECT_URI,
+	});
+
+	const response = await fetch(tokenUrl, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+		},
+		body: body.toString(),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+	}
+
+	return await response.json();
+}
