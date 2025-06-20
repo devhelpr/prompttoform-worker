@@ -11,12 +11,16 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { handleNetlifyAuth } from './netlify';
+import { handleNetlifyAuth, handleCodeFlowCanvasNetlifyAuth } from './netlify';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
 		const path = url.pathname;
+
+		if (path === '/netlify/code-flow-canvas') {
+			return handleCodeFlowCanvasNetlifyAuth(request, env);
+		}
 
 		// Route to Netlify OAuth handler
 		if (path === '/netlify/auth') {

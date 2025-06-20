@@ -86,3 +86,16 @@ async function exchangeCodeForToken(code: string, env: Env): Promise<any> {
 
 	return await response.json();
 }
+
+export async function handleCodeFlowCanvasNetlifyAuth(request: Request, env: Env): Promise<Response> {
+	const url = new URL(request.url);
+	const code = url.searchParams.get('code');
+	const state = url.searchParams.get('state');
+	const error = url.searchParams.get('error');
+	const workerRedirect = 'https://form-generator-worker.maikel-f16.workers.dev/netlify';
+	//const redirectUrl = new URL('https://demo.codeflowcanvas.io');
+
+	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=site&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
+
+	return Response.redirect(redirectUrl, 302);
+}
