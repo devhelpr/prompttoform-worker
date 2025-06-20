@@ -95,7 +95,7 @@ export async function handleCodeFlowCanvasNetlifyAuth(request: Request, env: Env
 	const workerRedirect = 'https://form-generator-worker.maikel-f16.workers.dev/netlify';
 	//const redirectUrl = new URL('https://demo.codeflowcanvas.io');
 
-	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=site&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
+	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=public&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
 
 	return Response.redirect(redirectUrl, 302);
 }
