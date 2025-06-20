@@ -23,7 +23,7 @@ export default {
 		}
 
 		// Route to Netlify OAuth handler
-		if (path === '/netlify/auth') {
+		if (path === '/netlify') {
 			return handleNetlifyAuth(request, env);
 		}
 
