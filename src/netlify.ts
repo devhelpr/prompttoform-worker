@@ -2,6 +2,11 @@
  * Netlify OAuth Handler
  * Handles the OAuth callback from Netlify after user authentication
  */
+const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Headers': '*',
+	'Access-Control-Allow-Methods': '*',
+};
 
 export async function handleNetlifyAuth(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url);
@@ -9,12 +14,22 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 	const state = url.searchParams.get('state');
 	const error = url.searchParams.get('error');
 
+	if (request.method === 'OPTIONS') {
+		return new Response(null, {
+			status: 204,
+			headers: {
+				...corsHeaders,
+			},
+		});
+	}
+
 	// Handle OAuth errors
 	if (error) {
 		return new Response(`OAuth Error: ${error}`, {
 			status: 400,
 			headers: {
 				'Content-Type': 'text/plain',
+				...corsHeaders,
 			},
 		});
 	}
@@ -96,6 +111,14 @@ export async function handleCodeFlowCanvasNetlifyAuth(request: Request, env: Env
 	const workerRedirect = 'https://form-generator-worker.maikel-f16.workers.dev/netlify';
 	//const redirectUrl = new URL('https://demo.codeflowcanvas.io');
 
+	if (request.method === 'OPTIONS') {
+		return new Response(null, {
+			status: 204,
+			headers: {
+				...corsHeaders,
+			},
+		});
+	}
 	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=public&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
 
 	return Response.redirect(redirectUrl, 302);

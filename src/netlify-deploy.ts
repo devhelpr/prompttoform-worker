@@ -1,3 +1,9 @@
+const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Headers': '*',
+	'Access-Control-Allow-Methods': '*',
+};
+
 export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url);
 	const code = url.searchParams.get('code');
@@ -5,6 +11,13 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 	const error = url.searchParams.get('error');
 	const body: any = await request.json();
 	const accessToken = body.netlifyAccessToken;
+
+	if (request.method === 'OPTIONS') {
+		return new Response(null, {
+			status: 204,
+			headers: corsHeaders,
+		});
+	}
 
 	if (!accessToken) {
 		return new Response('No access token provided', { status: 400 });
@@ -22,6 +35,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
 				'Content-Type': 'application/json',
+				...corsHeaders,
 			},
 		});
 		const site: any = await createSite.json();
@@ -40,7 +54,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			JSON.stringify({
 				siteId: site.site_id,
 			}),
-			{ status: 200 }
+			{ status: 200, headers: corsHeaders }
 		);
 	} else {
 		// upload zip contents to netlify
@@ -57,7 +71,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			JSON.stringify({
 				siteId: siteId,
 			}),
-			{ status: 200 }
+			{ status: 200, headers: corsHeaders }
 		);
 	}
 
