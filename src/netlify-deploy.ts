@@ -55,7 +55,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			formData.append('file', zipBlob, 'test.zip');
 
 			// upload zip contents to netlify
-			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/deploys`, {
+			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
 				body: zipContents,
 				headers: {
@@ -108,7 +108,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			const formData = new FormData();
 			formData.append('file', zipBlob, 'test.zip');
 			// upload zip contents to netlify
-			await fetch(`https://api.netify.com/api/v1/sites/${siteId}/deploys`, {
+			await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
 				method: 'POST',
 				body: zipContents,
 				headers: {
