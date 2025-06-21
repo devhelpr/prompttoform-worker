@@ -62,7 +62,13 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 			redirectUrl.searchParams.set('state', state);
 		}
 
-		return Response.redirect(redirectUrl.toString(), 302);
+		return new Response(null, {
+			status: 302,
+			headers: {
+				...corsHeaders,
+				Location: redirectUrl.toString(),
+			},
+		});
 	} catch (error) {
 		console.error('Error exchanging code for token:', error);
 
@@ -72,7 +78,13 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		redirectUrl.searchParams.set('provider', 'netlify');
 		redirectUrl.searchParams.set('error', 'token_exchange_failed');
 
-		return Response.redirect(redirectUrl.toString(), 302);
+		return new Response(null, {
+			status: 302,
+			headers: {
+				...corsHeaders,
+				Location: redirectUrl.toString(),
+			},
+		});
 	}
 }
 
