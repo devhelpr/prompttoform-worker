@@ -100,6 +100,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 					siteId: site.site_id,
 					payload: { ...site },
 					uploadZip: { status: uploadZip.status, statusText: uploadZip.statusText },
+					siteUrl: `https://${site.default_domain}`,
 				}),
 				{ status: 200, headers: corsHeaders }
 			);
@@ -108,7 +109,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			const formData = new FormData();
 			formData.append('file', zipBlob, 'test.zip');
 			// upload zip contents to netlify
-			await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
+			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
 				method: 'POST',
 				body: zipContents,
 				headers: {
@@ -117,6 +118,35 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 				},
 				//body: formData,
 			});
+
+			if (!uploadZip.ok) {
+				let errorText = '';
+				try {
+					const contentType = uploadZip.headers.get('content-type') || '';
+					if (contentType.includes('application/json')) {
+						const errorJson = await uploadZip.json();
+						errorText = JSON.stringify(errorJson);
+					} else {
+						errorText = await uploadZip.text();
+					}
+				} catch (e) {
+					errorText = `Failed to parse error body: ${e}`;
+				}
+
+				return new Response(
+					JSON.stringify({
+						message: 'Error uploading zip to Netlify',
+						status: uploadZip.status,
+						statusText: uploadZip.statusText,
+						details: errorText,
+						siteId: siteId,
+					}),
+					{
+						status: 500,
+						headers: corsHeaders,
+					}
+				);
+			}
 
 			return new Response(
 				JSON.stringify({
