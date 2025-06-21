@@ -32,7 +32,7 @@
 		// "NETLIFY_CLIENT_ID": "",
 		// "NETLIFY_CLIENT_SECRET": "",
 		// "NETLIFY_REDIRECT_URI": ""
-	}
+	},
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
@@ -43,6 +43,11 @@
 	 * https://developers.cloudflare.com/workers/static-assets/binding/
 	 */
 	// "assets": { "directory": "./public/", "binding": "ASSETS" },
+
+	"assets": {
+		"directory": "./assets/",
+		"binding": "ASSETS"
+	}
 
 	/**
 	 * Service Bindings (communicate between multiple Workers)

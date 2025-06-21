@@ -12,6 +12,7 @@
  */
 
 import { handleNetlifyAuth, handleCodeFlowCanvasNetlifyAuth } from './netlify';
+import { handleDeployCodeFlowCanvasToNetlify } from './netlify-deploy';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -20,6 +21,9 @@ export default {
 
 		if (path === '/netlify/code-flow-canvas') {
 			return handleCodeFlowCanvasNetlifyAuth(request, env);
+		}
+		if (path === '/netlify/deploy-code-flow-canvas') {
+			return handleDeployCodeFlowCanvasToNetlify(request, env);
 		}
 
 		// Route to Netlify OAuth handler
