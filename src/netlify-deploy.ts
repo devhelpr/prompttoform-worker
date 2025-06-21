@@ -51,11 +51,19 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 					'Content-Type': 'application/zip',
 				},
 			});
+			if (uploadZip.status !== 200) {
+				return new Response(JSON.stringify({ message: 'Error uploading zip to Netlify', error: uploadZip.statusText }), {
+					status: 500,
+					headers: corsHeaders,
+				});
+			}
+			//const repsonseZip: any = await uploadZip.json();
 
 			return new Response(
 				JSON.stringify({
 					siteId: site.site_id,
 					payload: { ...site },
+					uploadZip: { status: uploadZip.status, statusText: uploadZip.statusText },
 				}),
 				{ status: 200, headers: corsHeaders }
 			);
