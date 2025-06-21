@@ -4,6 +4,11 @@ const corsHeaders = {
 	'Access-Control-Allow-Methods': '*',
 };
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+	const binary = String.fromCharCode(...new Uint8Array(buffer));
+	return btoa(binary);
+}
+
 export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url);
 	const code = url.searchParams.get('code');
@@ -43,15 +48,21 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			const site: any = await createSite.json();
 
 			//zipContents should be a base64 encoded string
-			const zipContentsBase64 = Buffer.from(zipContents).toString('base64');
+			//const zipContentsBase64 = arrayBufferToBase64(zipContents);
+
+			const zipBlob = new Blob([zipContents], { type: 'application/zip' });
+			const formData = new FormData();
+			formData.append('file', zipBlob, 'test.zip');
+
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
-				body: zipContentsBase64,
+				//body: zipContentsBase64,
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
-					'Content-Type': 'application/zip',
+					//'Content-Type': 'application/zip',
 				},
+				body: formData,
 			});
 			if (uploadZip.status !== 200) {
 				return new Response(JSON.stringify({ message: 'Error uploading zip to Netlify', error: uploadZip.statusText }), {
@@ -70,14 +81,18 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 				{ status: 200, headers: corsHeaders }
 			);
 		} else {
+			const zipBlob = new Blob([zipContents], { type: 'application/zip' });
+			const formData = new FormData();
+			formData.append('file', zipBlob, 'test.zip');
 			// upload zip contents to netlify
 			await fetch(`https://api.netify.com/api/v1/sites/${siteId}/deploys`, {
 				method: 'POST',
-				body: zipContents,
+				//body: zipContents,
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
-					'Content-Type': 'application/zip',
+					//'Content-Type': 'application/zip',
 				},
+				body: formData,
 			});
 
 			return new Response(
