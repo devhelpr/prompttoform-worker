@@ -37,7 +37,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
-					'Content-Type': 'application/json',
+					//'Content-Type': 'application/json',
 				},
 			});
 			const site: any = await createSite.json();
