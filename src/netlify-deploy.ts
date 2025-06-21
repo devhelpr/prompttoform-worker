@@ -42,10 +42,12 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			});
 			const site: any = await createSite.json();
 
+			//zipContents should be a base64 encoded string
+			const zipContentsBase64 = Buffer.from(zipContents).toString('base64');
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
-				body: zipContents,
+				body: zipContentsBase64,
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
 					'Content-Type': 'application/zip',
