@@ -121,5 +121,11 @@ export async function handleCodeFlowCanvasNetlifyAuth(request: Request, env: Env
 	}
 	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=public&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
 
-	return Response.redirect(redirectUrl, 302);
+	return new Response(null, {
+		status: 302,
+		headers: {
+			...corsHeaders,
+			Location: redirectUrl,
+		},
+	});
 }
