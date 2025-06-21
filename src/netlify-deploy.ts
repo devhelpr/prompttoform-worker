@@ -22,60 +22,62 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 	if (!accessToken) {
 		return new Response('No access token provided', { status: 400 });
 	}
+	try {
+		// read contents from  assets/test.zip , we're inside a cloudflare worker
+		const zip = await env.ASSETS.fetch(new URL('https://assets.local/test.zip'));
+		const zipContents = await zip.arrayBuffer();
 
-	// read contents from  assets/test.zip , we're inside a cloudflare worker
-	const zip = await env.ASSETS.fetch(new URL('https://assets.local/test.zip'));
-	const zipContents = await zip.arrayBuffer();
+		const siteId = body.netlifySiteId;
 
-	const siteId = body.netlifySiteId;
+		if (!siteId) {
+			const createSite = await fetch(`https://api.netlify.com/api/v1/sites`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'application/json',
+				},
+			});
+			const site: any = await createSite.json();
 
-	if (!siteId) {
-		const createSite = await fetch(`https://api.netlify.com/api/v1/sites`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'application/json',
-				...corsHeaders,
-			},
+			// upload zip contents to netlify
+			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/zip`, {
+				method: 'POST',
+				body: zipContents,
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'application/zip',
+				},
+			});
+
+			return new Response(
+				JSON.stringify({
+					siteId: site.site_id,
+				}),
+				{ status: 200, headers: corsHeaders }
+			);
+		} else {
+			// upload zip contents to netlify
+			await fetch(`https://api.netify.com/api/v1/sites/${siteId}/deploys`, {
+				method: 'POST',
+				body: zipContents,
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'application/zip',
+				},
+			});
+
+			return new Response(
+				JSON.stringify({
+					siteId: siteId,
+				}),
+				{ status: 200, headers: corsHeaders }
+			);
+		}
+	} catch (error) {
+		console.error(error);
+		return new Response(JSON.stringify({ message: 'Error deploying to Netlify', error: error }), {
+			status: 500,
+			headers: corsHeaders,
 		});
-		const site: any = await createSite.json();
-
-		// upload zip contents to netlify
-		const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/zip`, {
-			method: 'POST',
-			body: zipContents,
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'application/zip',
-			},
-		});
-
-		return new Response(
-			JSON.stringify({
-				siteId: site.site_id,
-			}),
-			{ status: 200, headers: corsHeaders }
-		);
-	} else {
-		// upload zip contents to netlify
-		await fetch(`https://api.netify.com/api/v1/sites/${siteId}/deploys`, {
-			method: 'POST',
-			body: zipContents,
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'application/zip',
-			},
-		});
-
-		return new Response(
-			JSON.stringify({
-				siteId: siteId,
-			}),
-			{ status: 200, headers: corsHeaders }
-		);
 	}
-
-	//
-
-	return new Response('Deploying...');
 }
