@@ -20,7 +20,10 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 	const accessToken = body.netlifyAccessToken;
 
 	if (!accessToken) {
-		return new Response('No access token provided', { status: 400 });
+		return new Response('No access token provided', {
+			status: 400,
+			headers: corsHeaders,
+		});
 	}
 	try {
 		// read contents from  assets/test.zip , we're inside a cloudflare worker
@@ -40,7 +43,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			const site: any = await createSite.json();
 
 			// upload zip contents to netlify
-			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/zip`, {
+			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
 				body: zipContents,
 				headers: {
@@ -52,6 +55,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			return new Response(
 				JSON.stringify({
 					siteId: site.site_id,
+					payload: { ...site },
 				}),
 				{ status: 200, headers: corsHeaders }
 			);
