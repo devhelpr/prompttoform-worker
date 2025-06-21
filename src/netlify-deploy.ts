@@ -64,11 +64,32 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 				},
 				//body: formData,
 			});
-			if (uploadZip.status !== 200) {
-				return new Response(JSON.stringify({ message: 'Error uploading zip to Netlify', error: uploadZip.statusText }), {
-					status: 500,
-					headers: corsHeaders,
-				});
+			if (!uploadZip.ok) {
+				let errorText = '';
+				try {
+					const contentType = uploadZip.headers.get('content-type') || '';
+					if (contentType.includes('application/json')) {
+						const errorJson = await uploadZip.json();
+						errorText = JSON.stringify(errorJson);
+					} else {
+						errorText = await uploadZip.text();
+					}
+				} catch (e) {
+					errorText = `Failed to parse error body: ${e}`;
+				}
+
+				return new Response(
+					JSON.stringify({
+						message: 'Error uploading zip to Netlify',
+						status: uploadZip.status,
+						statusText: uploadZip.statusText,
+						details: errorText,
+					}),
+					{
+						status: 500,
+						headers: corsHeaders,
+					}
+				);
 			}
 			//const repsonseZip: any = await uploadZip.json();
 
