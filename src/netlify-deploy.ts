@@ -84,6 +84,8 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 						status: uploadZip.status,
 						statusText: uploadZip.statusText,
 						details: errorText,
+						zipContentsBase64: zipContentsBase64,
+						siteId: site.site_id,
 					}),
 					{
 						status: 500,
