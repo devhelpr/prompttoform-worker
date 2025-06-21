@@ -9,8 +9,6 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
 	const error = url.searchParams.get('error');
-	const body: any = await request.json();
-	const accessToken = body.netlifyAccessToken;
 
 	if (request.method === 'OPTIONS') {
 		return new Response(null, {
@@ -18,6 +16,8 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			headers: corsHeaders,
 		});
 	}
+	const body: any = await request.json();
+	const accessToken = body.netlifyAccessToken;
 
 	if (!accessToken) {
 		return new Response('No access token provided', { status: 400 });
