@@ -57,7 +57,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
-				body: zipContentsBase64,
+				body: zipContents,
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
 					'Content-Type': 'application/zip',
@@ -110,12 +110,12 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			// upload zip contents to netlify
 			await fetch(`https://api.netify.com/api/v1/sites/${siteId}/deploys`, {
 				method: 'POST',
-				//body: zipContents,
+				body: zipContents,
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
-					//'Content-Type': 'application/zip',
+					'Content-Type': 'application/zip',
 				},
-				body: formData,
+				//body: formData,
 			});
 
 			return new Response(
