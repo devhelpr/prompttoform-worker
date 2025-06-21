@@ -56,6 +56,7 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		redirectUrl.searchParams.set('auth', 'success');
 		redirectUrl.searchParams.set('provider', 'netlify');
 		redirectUrl.searchParams.set('access_token', tokenResponse.access_token); //temp
+		redirectUrl.searchParams.set('dev', '1'); //temp
 
 		// Optionally include the state parameter if it was provided
 		if (state) {
