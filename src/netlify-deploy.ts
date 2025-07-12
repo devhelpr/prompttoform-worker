@@ -32,7 +32,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 	}
 	try {
 		// read contents from  assets/test.zip , we're inside a cloudflare worker
-		const zip = await env.ASSETS.fetch(new URL('https://assets.local/test.zip'));
+		const zip = await env.ASSETS.fetch(new URL('https://assets.local/react-form.zip'));
 		const zipContents = await zip.arrayBuffer();
 
 		const siteId = body.netlifySiteId;
@@ -52,7 +52,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 
 			const zipBlob = new Blob([zipContents], { type: 'application/zip' });
 			const formData = new FormData();
-			formData.append('file', zipBlob, 'test.zip');
+			formData.append('file', zipBlob, 'react-form.zip');
 
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
@@ -107,7 +107,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 		} else {
 			const zipBlob = new Blob([zipContents], { type: 'application/zip' });
 			const formData = new FormData();
-			formData.append('file', zipBlob, 'test.zip');
+			formData.append('file', zipBlob, 'react-form.zip');
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
 				method: 'POST',

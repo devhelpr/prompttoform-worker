@@ -75,7 +75,7 @@ export default {
 			throw new Error(`Missing api-url or api-path ${apiUrl} ${apiPath}`);
 		}
 
-		const pathSegment = apiPath !== '-' ? `/${apiPath}` : '';
+		let pathSegment = apiPath !== '-' ? `/${apiPath}` : '';
 
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
@@ -88,6 +88,13 @@ export default {
 			apiUrl = `${apiUrl}${clientAuth}`;
 		}
 
+		if (apiUrl.endsWith('/') && pathSegment.startsWith('/')) {
+			pathSegment = pathSegment.slice(1);
+		}
+		if (pathSegment.startsWith('//')) {
+			pathSegment = pathSegment.slice(1);
+		}
+		console.log(`${apiUrl} - ${pathSegment}`);
 		const proxyRequest = new Request(`${apiUrl}${pathSegment}`, {
 			method: request.method,
 			headers,
@@ -95,7 +102,16 @@ export default {
 		});
 
 		try {
-			const response = await fetch(proxyRequest);
+			const response = await fetch(proxyRequest).catch((err) => {
+				console.log('Proxy error:', {
+					error: err instanceof Error ? err.message : String(err),
+					stack: err instanceof Error ? err.stack : undefined,
+					apiUrl: `${apiUrl}${pathSegment}`,
+					method: request.method,
+					status: err instanceof Response ? err.status : undefined,
+				});
+				return new Response('Error connecting to AI Gateway', { status: 502 });
+			});
 			return new Response(response.body, {
 				status: response.status,
 				headers: {
@@ -104,6 +120,13 @@ export default {
 				},
 			});
 		} catch (err) {
+			console.log('Proxy error:', {
+				error: err instanceof Error ? err.message : String(err),
+				stack: err instanceof Error ? err.stack : undefined,
+				apiUrl: `${apiUrl}${pathSegment}`,
+				method: request.method,
+				status: err instanceof Response ? err.status : undefined,
+			});
 			return new Response('Error connecting to AI Gateway', { status: 502 });
 		}
 	},
