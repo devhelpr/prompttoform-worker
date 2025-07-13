@@ -150,10 +150,12 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 					}
 				);
 			}
+			const site: any = await uploadZip.json();
 			step = 'uploadZip.ok.true';
 			return new Response(
 				JSON.stringify({
 					siteId: siteId,
+					siteUrl: `https://${site.default_domain}`,
 				}),
 				{ status: 200, headers: corsHeaders }
 			);
