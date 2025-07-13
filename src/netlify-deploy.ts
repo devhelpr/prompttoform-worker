@@ -36,16 +36,16 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 				},
 			});
 			const site: any = await createSite.json();
-			step = 'createSite.json';
+			step = `createSite.json: ${JSON.stringify(site)}`;
 			//zipContents should be a base64 encoded string
-			const zipContentsBase64 = arrayBufferToBase64(zipBuffer);
+			// const zipContentsBase64 = arrayBufferToBase64(zipBuffer);
 
-			step = 'zipContentsBase64';
+			// step = 'zipContentsBase64';
 
-			const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
-			const formData = new FormData();
-			formData.append('file', zipBlob, 'react-form.zip');
-			step = 'formData';
+			// const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
+			// const formData = new FormData();
+			// formData.append('file', zipBlob, 'react-form.zip');
+			// step = 'formData';
 
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
@@ -77,7 +77,7 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 						status: uploadZip.status,
 						statusText: uploadZip.statusText,
 						details: errorText,
-						zipContentsBase64: zipContentsBase64,
+						// zipContentsBase64: zipContentsBase64,
 						siteId: site.site_id,
 					}),
 					{
