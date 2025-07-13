@@ -155,7 +155,7 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 			return new Response(
 				JSON.stringify({
 					siteId: siteId,
-					siteUrl: `https://${site.default_domain}`,
+					siteUrl: `https://${site.ssl_url}`,
 					payload: { ...site },
 				}),
 				{ status: 200, headers: corsHeaders }
