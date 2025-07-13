@@ -44,6 +44,7 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		});
 	}
 
+	const redirectUrl = new URL('https://79e6444b.prompttoform.pages.dev'); //new URL('https://demo.codeflowcanvas.io');
 	try {
 		// Exchange the authorization code for an access token
 		const tokenResponse = await exchangeCodeForToken(code, env);
@@ -52,7 +53,6 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		// For now, we'll just redirect with success
 
 		// Redirect to demo.codeflowcanvas.io with success
-		const redirectUrl = new URL('https://demo.codeflowcanvas.io');
 		redirectUrl.searchParams.set('auth', 'success');
 		redirectUrl.searchParams.set('provider', 'netlify');
 		redirectUrl.searchParams.set('access_token', tokenResponse.access_token); //temp
@@ -74,7 +74,6 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		console.error('Error exchanging code for token:', error);
 
 		// Redirect to demo.codeflowcanvas.io with error
-		const redirectUrl = new URL('https://demo.codeflowcanvas.io');
 		redirectUrl.searchParams.set('auth', 'error');
 		redirectUrl.searchParams.set('provider', 'netlify');
 		redirectUrl.searchParams.set('error', 'token_exchange_failed');
