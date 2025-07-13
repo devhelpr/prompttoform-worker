@@ -44,7 +44,7 @@ export async function handleNetlifyAuth(request: Request, env: Env): Promise<Res
 		});
 	}
 
-	const redirectUrl = new URL('https://79e6444b.prompttoform.pages.dev'); //new URL('https://demo.codeflowcanvas.io');
+	const redirectUrl = new URL(state ?? 'https://79e6444b.prompttoform.pages.dev'); //new URL('https://demo.codeflowcanvas.io');
 	try {
 		// Exchange the authorization code for an access token
 		const tokenResponse = await exchangeCodeForToken(code, env);
@@ -131,7 +131,7 @@ export async function handleCodeFlowCanvasNetlifyAuth(request: Request, env: Env
 			},
 		});
 	}
-	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=public&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}`;
+	const redirectUrl = `https://app.netlify.com/authorize?response_type=code&scope=public&client_id=${env.NETLIFY_CLIENT_ID}&redirect_uri=${workerRedirect}&state=${state}`;
 
 	return new Response(null, {
 		status: 302,
