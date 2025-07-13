@@ -30,7 +30,7 @@ export default {
 			return handleCodeFlowCanvasNetlifyAuth(request, env);
 		}
 		if (path === '/netlify/deploy-form-preview') {
-			return handleDeployCodeFlowCanvasToNetlify(request, env);
+			return await handleDeployCodeFlowCanvasToNetlify(request, env);
 		}
 
 		// Route to Netlify OAuth handler
