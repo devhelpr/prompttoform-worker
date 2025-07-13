@@ -193,7 +193,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			const zipBuffer = base64ToArrayBuffer(body.zipContents);
 			step = 'zipBuffer';
 			const siteId = body.netlifySiteId;
-			step = 'siteId';
+			step = `siteId: ${siteId}`;
 			let result = await uploadZipToNetlify(zipBuffer, siteId, accessToken);
 			step = 'result';
 			return result;
