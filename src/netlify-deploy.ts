@@ -24,7 +24,9 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, accessToken?: string) {
+	let step = '';
 	if (!siteId) {
+		step = 'createSite';
 		const createSite = await fetch(`https://api.netlify.com/api/v1/sites`, {
 			method: 'POST',
 			headers: {
@@ -33,64 +35,72 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 			},
 		});
 		const site: any = await createSite.json();
-
+		step = 'createSite.json';
 		//zipContents should be a base64 encoded string
 		const zipContentsBase64 = arrayBufferToBase64(zipBuffer);
+
+		step = 'zipContentsBase64';
 
 		const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
 		const formData = new FormData();
 		formData.append('file', zipBlob, 'react-form.zip');
+		step = 'formData';
 
-		// upload zip contents to netlify
-		const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
-			method: 'POST',
-			body: zipBuffer,
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'application/zip',
-			},
-			//body: formData,
-		});
-		if (!uploadZip.ok) {
-			let errorText = '';
-			try {
-				const contentType = uploadZip.headers.get('content-type') || '';
-				if (contentType.includes('application/json')) {
-					const errorJson = await uploadZip.json();
-					errorText = JSON.stringify(errorJson);
-				} else {
-					errorText = await uploadZip.text();
+		try {
+			// upload zip contents to netlify
+			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
+				method: 'POST',
+				body: zipBuffer,
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'application/zip',
+				},
+				//body: formData,
+			});
+			if (!uploadZip.ok) {
+				let errorText = '';
+				try {
+					const contentType = uploadZip.headers.get('content-type') || '';
+					if (contentType.includes('application/json')) {
+						const errorJson = await uploadZip.json();
+						errorText = JSON.stringify(errorJson);
+					} else {
+						errorText = await uploadZip.text();
+					}
+				} catch (e) {
+					errorText = `Failed to parse error body: ${e}`;
 				}
-			} catch (e) {
-				errorText = `Failed to parse error body: ${e}`;
+
+				return new Response(
+					JSON.stringify({
+						message: 'Error uploading zip to Netlify',
+						status: uploadZip.status,
+						statusText: uploadZip.statusText,
+						details: errorText,
+						zipContentsBase64: zipContentsBase64,
+						siteId: site.site_id,
+					}),
+					{
+						status: 500,
+						headers: corsHeaders,
+					}
+				);
 			}
+			//const repsonseZip: any = await uploadZip.json();
 
 			return new Response(
 				JSON.stringify({
-					message: 'Error uploading zip to Netlify',
-					status: uploadZip.status,
-					statusText: uploadZip.statusText,
-					details: errorText,
-					zipContentsBase64: zipContentsBase64,
 					siteId: site.site_id,
+					payload: { ...site },
+					uploadZip: { status: uploadZip.status, statusText: uploadZip.statusText },
+					siteUrl: `https://${site.default_domain}`,
 				}),
-				{
-					status: 500,
-					headers: corsHeaders,
-				}
+				{ status: 200, headers: corsHeaders }
 			);
+		} catch (error) {
+			console.error(error);
+			throw new Error(`Error uploading zip to Netlify (!siteId): ${step} ${error}`);
 		}
-		//const repsonseZip: any = await uploadZip.json();
-
-		return new Response(
-			JSON.stringify({
-				siteId: site.site_id,
-				payload: { ...site },
-				uploadZip: { status: uploadZip.status, statusText: uploadZip.statusText },
-				siteUrl: `https://${site.default_domain}`,
-			}),
-			{ status: 200, headers: corsHeaders }
-		);
 	} else {
 		let step = '';
 		try {
