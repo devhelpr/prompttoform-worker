@@ -27,26 +27,26 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 	let step = '';
 	if (!siteId) {
 		step = 'createSite';
-		const createSite = await fetch(`https://api.netlify.com/api/v1/sites`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				//'Content-Type': 'application/json',
-			},
-		});
-		const site: any = await createSite.json();
-		step = 'createSite.json';
-		//zipContents should be a base64 encoded string
-		const zipContentsBase64 = arrayBufferToBase64(zipBuffer);
-
-		step = 'zipContentsBase64';
-
-		const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
-		const formData = new FormData();
-		formData.append('file', zipBlob, 'react-form.zip');
-		step = 'formData';
-
 		try {
+			const createSite = await fetch(`https://api.netlify.com/api/v1/sites`, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					//'Content-Type': 'application/json',
+				},
+			});
+			const site: any = await createSite.json();
+			step = 'createSite.json';
+			//zipContents should be a base64 encoded string
+			const zipContentsBase64 = arrayBufferToBase64(zipBuffer);
+
+			step = 'zipContentsBase64';
+
+			const zipBlob = new Blob([zipBuffer], { type: 'application/zip' });
+			const formData = new FormData();
+			formData.append('file', zipBlob, 'react-form.zip');
+			step = 'formData';
+
 			// upload zip contents to netlify
 			const uploadZip = await fetch(`https://api.netlify.com/api/v1/sites/${site.site_id}/deploys`, {
 				method: 'POST',
