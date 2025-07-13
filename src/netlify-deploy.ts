@@ -165,12 +165,15 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			headers: corsHeaders,
 		});
 	}
+	let step = '';
 	try {
 		if (body.zipContents) {
+			step = 'zipContents';
 			// body.zipContents is a base64 encoded string which contains a zip file
 			const zipBuffer = base64ToArrayBuffer(body.zipContents);
+			step = 'zipBuffer';
 			const siteId = body.netlifySiteId;
-
+			step = 'siteId';
 			return await uploadZipToNetlify(zipBuffer, siteId, accessToken);
 		}
 		// read contents from  assets/test.zip , we're inside a cloudflare worker
@@ -181,7 +184,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 		return await uploadZipToNetlify(zipContents, siteId, accessToken);
 	} catch (error) {
 		console.error(error);
-		return new Response(JSON.stringify({ message: 'Error deploying to Netlify', error: error }), {
+		return new Response(JSON.stringify({ message: 'Error deploying to Netlify', error: error, step: step }), {
 			status: 500,
 			headers: corsHeaders,
 		});
