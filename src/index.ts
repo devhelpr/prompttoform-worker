@@ -26,6 +26,13 @@ export default {
 			return handleDeployCodeFlowCanvasToNetlify(request, env);
 		}
 
+		if (path === '/netlify/auth-prompttoform') {
+			return handleCodeFlowCanvasNetlifyAuth(request, env);
+		}
+		if (path === '/netlify/deploy-form-preview') {
+			return handleDeployCodeFlowCanvasToNetlify(request, env);
+		}
+
 		// Route to Netlify OAuth handler
 		if (path === '/netlify') {
 			return handleNetlifyAuth(request, env);
