@@ -204,7 +204,7 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 		return await uploadZipToNetlify(zipContents, siteId, accessToken);
 	} catch (error) {
 		console.error(error);
-		return new Response(JSON.stringify({ message: 'Error deploying to Netlify', error: error, step: step }), {
+		return new Response(JSON.stringify({ message: 'Error deploying to Netlify', error: JSON.stringify(error), step: step }), {
 			status: 500,
 			headers: corsHeaders,
 		});
