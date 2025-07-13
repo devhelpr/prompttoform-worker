@@ -156,6 +156,7 @@ async function uploadZipToNetlify(zipBuffer: ArrayBuffer, siteId?: string, acces
 				JSON.stringify({
 					siteId: siteId,
 					siteUrl: `https://${site.default_domain}`,
+					payload: { ...site },
 				}),
 				{ status: 200, headers: corsHeaders }
 			);
