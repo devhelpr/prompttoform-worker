@@ -194,7 +194,9 @@ export async function handleDeployCodeFlowCanvasToNetlify(request: Request, env:
 			step = 'zipBuffer';
 			const siteId = body.netlifySiteId;
 			step = 'siteId';
-			return await uploadZipToNetlify(zipBuffer, siteId, accessToken);
+			let result = await uploadZipToNetlify(zipBuffer, siteId, accessToken);
+			step = 'result';
+			return result;
 		}
 		// read contents from  assets/test.zip , we're inside a cloudflare worker
 		const zip = await env.ASSETS.fetch(new URL('https://assets.local/react-form.zip'));
