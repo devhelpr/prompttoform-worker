@@ -57,7 +57,15 @@ export default {
 			useSystemKey = true;
 		}
 
-		if (!isDev && !allowedOrigin.find((o) => o.startsWith(origin))) {
+		let isPrompttoformPRBranch = false;
+		if (!isDev) {
+			//*.prompttoform.pages.dev
+			if (origin.endsWith('.prompttoform.pages.dev')) {
+				isPrompttoformPRBranch = true;
+			}
+		}
+
+		if (!isPrompttoformPRBranch && !isDev && !allowedOrigin.find((o) => o.startsWith(origin))) {
 			return new Response('Forbidden: invalid origin', { status: 403 });
 		}
 
