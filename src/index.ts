@@ -13,6 +13,7 @@
 
 import { handleNetlifyAuth, handleCodeFlowCanvasNetlifyAuth } from './netlify';
 import { handleDeployCodeFlowCanvasToNetlify } from './netlify-deploy';
+import { handleEmailFormData } from './email';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -36,6 +37,11 @@ export default {
 		// Route to Netlify OAuth handler
 		if (path === '/netlify') {
 			return handleNetlifyAuth(request, env);
+		}
+
+		// Route to email form data handler
+		if (path === '/email/form-data') {
+			return handleEmailFormData(request, env);
 		}
 
 		// Existing proxy functionality

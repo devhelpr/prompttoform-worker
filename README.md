@@ -1,105 +1,104 @@
 # Form Generator Worker
 
-A Cloudflare Worker that provides proxy functionality for AI APIs and Netlify OAuth integration.
+A Cloudflare Worker that provides various form-related services including Netlify integration and email functionality.
 
 ## Features
 
-- **AI API Proxy**: Routes requests to various AI providers (OpenAI, Gemini) with proper authentication
-- **Netlify OAuth**: Handles OAuth authentication flow for Netlify integration
+- Netlify OAuth integration
+- Form deployment to Netlify
+- Email form data via Mailrelay
+- AI Gateway proxy functionality
 
-## Netlify OAuth Integration
+## Email Endpoint
 
-This worker includes a Netlify OAuth endpoint that handles the authentication callback from Netlify and redirects users to `demo.codeflowcanvas.io`.
+The worker includes an endpoint for sending form data via email using Mailrelay.
 
-### Setup
+### Configuration
 
-1. **Create a Netlify OAuth App**:
-   - Go to [Netlify OAuth Apps](https://app.netlify.com/user/applications)
-   - Create a new OAuth application
-   - Set the redirect URI to: `https://your-worker.your-subdomain.workers.dev/netlify/auth`
+Set the following environment variables in your Cloudflare Worker:
 
-2. **Configure Environment Variables**:
-   Add the following environment variables to your worker:
-
-   ```bash
-   wrangler secret put NETLIFY_CLIENT_ID
-   wrangler secret put NETLIFY_CLIENT_SECRET
-   wrangler secret put NETLIFY_REDIRECT_URI
-   ```
-
-   Or set them in your `wrangler.jsonc`:
-   ```json
-   {
-     "vars": {
-       "NETLIFY_CLIENT_ID": "your-client-id",
-       "NETLIFY_CLIENT_SECRET": "your-client-secret", 
-       "NETLIFY_REDIRECT_URI": "https://your-worker.your-subdomain.workers.dev/netlify/auth"
-     }
-   }
-   ```
-
-3. **Deploy the Worker**:
-   ```bash
-   npm run deploy
-   ```
+```bash
+MAILRELAY_API_KEY=your_mailrelay_api_key
+MAILRELAY_DOMAIN=your_mailrelay_domain
+```
 
 ### Usage
 
-1. **Initiate OAuth Flow**:
-   Redirect users to:
-   ```
-   https://app.netlify.com/authorize?response_type=code&client_id=${YOUR_CLIENT_ID}&redirect_uri=${YOUR_REDIRECT_URI}&scope=deploy:sites
-   ```
+Send a POST request to `/email/form-data` with the following JSON structure:
 
-2. **Handle Callback**:
-   After user authentication, Netlify will redirect to your worker's `/netlify/auth` endpoint with an authorization code.
+```json
+{
+  "to": "recipient@example.com",
+  "subject": "New Form Submission",
+  "formData": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "message": "Hello world"
+  },
+  "from": "noreply@yourdomain.com"
+}
+```
 
-3. **Success Redirect**:
-   The worker will exchange the code for an access token and redirect to:
-   ```
-   https://demo.codeflowcanvas.io?auth=success&provider=netlify&state=${state}
-   ```
+#### Request Parameters
 
-4. **Error Handling**:
-   If there's an error, users will be redirected to:
-   ```
-   https://demo.codeflowcanvas.io?auth=error&provider=netlify&error=${error_type}
-   ```
+- `to` (required): Email address of the recipient
+- `subject` (optional): Email subject line (defaults to "New Form Submission")
+- `formData` (required): Object containing the form data to be sent
+- `from` (optional): Sender email address (defaults to "noreply@yourdomain.com")
 
-### Endpoints
+#### Response
 
-- `GET /netlify/auth` - OAuth callback endpoint
-- All other paths - AI API proxy functionality
+Success response:
+```json
+{
+  "success": true,
+  "message": "Email sent successfully",
+  "messageId": "message_id_from_mailrelay"
+}
+```
 
-### Testing
+Error response:
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "error": "Detailed error information"
+}
+```
 
-Run the tests to verify the OAuth flow:
+### Example
 
-```bash
-npm test
+```javascript
+const response = await fetch('https://your-worker.your-subdomain.workers.dev/email/form-data', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    to: 'admin@example.com',
+    subject: 'Contact Form Submission',
+    formData: {
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      phone: '+1234567890',
+      message: 'I would like to inquire about your services.'
+    }
+  })
+});
+
+const result = await response.json();
+console.log(result);
 ```
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-
-# Run tests
-npm test
-
-# Deploy to Cloudflare
-npm run deploy
 ```
 
-## Environment Variables
+## Deployment
 
-- `NETLIFY_CLIENT_ID` - Your Netlify OAuth app client ID
-- `NETLIFY_CLIENT_SECRET` - Your Netlify OAuth app client secret  
-- `NETLIFY_REDIRECT_URI` - The redirect URI configured in your Netlify OAuth app
-- `OPENAI_APIKEY` - OpenAI API key for proxy functionality
-- `GEMINI_APIKEY` - Gemini API key for proxy functionality
-- `WRANGLER_ENV` - Environment indicator (dev/production) 
+```bash
+npm run deploy
+``` 

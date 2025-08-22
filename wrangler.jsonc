@@ -31,7 +31,9 @@
 		"WRANGLER_ENV": ""
 		// "NETLIFY_CLIENT_ID": "",
 		// "NETLIFY_CLIENT_SECRET": "",
-		// "NETLIFY_REDIRECT_URI": ""
+		// "NETLIFY_REDIRECT_URI": "",
+		// "MAILRELAY_API_KEY": "",
+		// "MAILRELAY_DOMAIN": ""
 	},
 	/**
 	 * Note: Use secrets to store sensitive data.
