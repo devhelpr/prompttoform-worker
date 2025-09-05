@@ -7,8 +7,271 @@ A Cloudflare Worker that provides various form-related services including Netlif
 - Netlify OAuth integration
 - Form deployment to Netlify
 - Email form data via Mailrelay
-- AI Gateway proxy functionality
+- AI Gateway proxy functionality with file upload support
 - SQLite database storage for JSON data
+
+## LLM API Proxy
+
+The worker acts as a secure proxy for various LLM APIs (OpenAI, Google Gemini, etc.) with support for both JSON requests and file uploads.
+
+### Configuration
+
+Set the following environment variables in your Cloudflare Worker:
+
+```bash
+OPENAI_APIKEY=your_openai_api_key
+GEMINI_APIKEY=your_gemini_api_key
+```
+
+### Supported File Types
+
+The proxy supports the following file types for upload:
+- **PDF**: `application/pdf`
+- **Images**: `image/jpeg`, `image/jpg`, `image/png`, `image/gif`, `image/webp`, `image/svg+xml`
+
+### File Size Limits
+
+- Maximum file size: **10MB**
+- Multiple files can be uploaded in a single request
+
+### Usage
+
+#### JSON Requests (Traditional)
+
+Send JSON requests to LLM APIs:
+
+```javascript
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: JSON.stringify({
+    model: 'gpt-4',
+    messages: [
+      { role: 'user', content: 'Hello, how are you?' }
+    ]
+  })
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+#### File Upload Requests (Multipart)
+
+Send files along with prompts to LLM APIs:
+
+```javascript
+const formData = new FormData();
+formData.append('file', pdfFile); // or imageFile
+formData.append('prompt', 'Analyze this document and summarize the key points');
+
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: formData
+});
+
+const result = await response.json();
+console.log(result);
+```
+
+#### Multiple Files
+
+Upload multiple files in a single request:
+
+```javascript
+const formData = new FormData();
+formData.append('file1', pdfFile);
+formData.append('file2', imageFile);
+formData.append('prompt', 'Compare these documents and images');
+
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: formData
+});
+```
+
+### Request Headers
+
+#### Required Headers
+
+- `api-url`: The base URL of the target LLM API (e.g., `https://api.openai.com/v1`)
+- `api-path`: The API endpoint path (e.g., `chat/completions`, `images/generations`)
+
+#### Optional Headers
+
+- `system-key`: Use predefined API keys (`openai` or `gemini`)
+- `Authorization`: Custom authorization header (if not using system-key)
+- `Origin`: Required for CORS validation
+
+### Supported LLM APIs
+
+#### OpenAI
+
+```javascript
+// Using system key
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: JSON.stringify({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: 'Hello!' }]
+  })
+});
+
+// Using custom authorization
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'Authorization': 'Bearer your-custom-openai-key'
+  },
+  body: JSON.stringify({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: 'Hello!' }]
+  })
+});
+```
+
+#### Google Gemini
+
+```javascript
+// Using system key
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-url': 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+    'api-path': '-',
+    'system-key': 'gemini'
+  },
+  body: JSON.stringify({
+    contents: [{
+      parts: [{ text: 'Hello, how are you?' }]
+    }]
+  })
+});
+```
+
+### Error Responses
+
+#### File Validation Errors
+
+```json
+{
+  "error": "Invalid file type",
+  "message": "File type text/plain is not supported. Allowed types: PDF, JPEG, PNG, GIF, WebP, SVG",
+  "allowedTypes": ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml"]
+}
+```
+
+```json
+{
+  "error": "File too large",
+  "message": "File size must be less than 10MB"
+}
+```
+
+```json
+{
+  "error": "Invalid form data",
+  "message": "Failed to parse multipart form data"
+}
+```
+
+#### Proxy Errors
+
+```json
+{
+  "error": "Missing api-url or api-path",
+  "message": "Missing api-url or api-path null null"
+}
+```
+
+### CORS Support
+
+The proxy includes CORS headers for the following origins:
+- `https://app.prompttoform.ai/`
+- `https://demo.codeflowcanvas.io/`
+- `https://ocif-generator.vercel.app/`
+- `*.prompttoform.pages.dev` (for PR branches)
+
+### Example Use Cases
+
+#### Document Analysis
+
+```javascript
+const formData = new FormData();
+formData.append('file', pdfDocument);
+formData.append('prompt', 'Extract all the key information from this document and format it as a structured summary');
+
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: formData
+});
+```
+
+#### Image Description
+
+```javascript
+const formData = new FormData();
+formData.append('file', imageFile);
+formData.append('prompt', 'Describe this image in detail, including any text visible in the image');
+
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: formData
+});
+```
+
+#### Code Review
+
+```javascript
+const formData = new FormData();
+formData.append('file', codeFile);
+formData.append('prompt', 'Review this code for potential bugs, security issues, and suggest improvements');
+
+const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
+  method: 'POST',
+  headers: {
+    'api-url': 'https://api.openai.com/v1',
+    'api-path': 'chat/completions',
+    'system-key': 'openai'
+  },
+  body: formData
+});
+```
 
 ## Email Endpoint
 

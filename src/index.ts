@@ -104,9 +104,84 @@ export default {
 
 		let pathSegment = apiPath !== '-' ? `/${apiPath}` : '';
 
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/json',
-		};
+		// Detect content type and handle file uploads
+		const contentType = request.headers.get('content-type') || '';
+		const isMultipart = contentType.includes('multipart/form-data');
+
+		// Validate file types if multipart request
+		if (isMultipart) {
+			try {
+				// Clone the request to avoid consuming the body
+				const clonedRequest = request.clone();
+				const formData = await clonedRequest.formData();
+				const files = Array.from(formData.entries()).filter(([_, value]) => value instanceof File);
+
+				// Validate file types
+				for (const [key, file] of files) {
+					if (file instanceof File) {
+						const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+
+						if (!allowedTypes.includes(file.type)) {
+							return new Response(
+								JSON.stringify({
+									error: 'Invalid file type',
+									message: `File type ${file.type} is not supported. Allowed types: PDF, JPEG, PNG, GIF, WebP, SVG`,
+									allowedTypes,
+								}),
+								{
+									status: 400,
+									headers: {
+										'Content-Type': 'application/json',
+										...corsHeaders,
+									},
+								}
+							);
+						}
+
+						// Check file size (limit to 10MB)
+						if (file.size > 10 * 1024 * 1024) {
+							return new Response(
+								JSON.stringify({
+									error: 'File too large',
+									message: 'File size must be less than 10MB',
+								}),
+								{
+									status: 400,
+									headers: {
+										'Content-Type': 'application/json',
+										...corsHeaders,
+									},
+								}
+							);
+						}
+					}
+				}
+			} catch (error) {
+				return new Response(
+					JSON.stringify({
+						error: 'Invalid form data',
+						message: 'Failed to parse multipart form data',
+					}),
+					{
+						status: 400,
+						headers: {
+							'Content-Type': 'application/json',
+							...corsHeaders,
+						},
+					}
+				);
+			}
+		}
+
+		const headers: Record<string, string> = {};
+
+		// Set content type based on request type
+		if (isMultipart) {
+			// For multipart requests, let the browser set the content-type with boundary
+			// Don't override it
+		} else {
+			headers['Content-Type'] = 'application/json';
+		}
 
 		if (clientAuth && !addkeyToUrl) {
 			headers['Authorization'] = clientAuth;

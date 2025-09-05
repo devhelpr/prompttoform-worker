@@ -27,4 +27,119 @@ describe('Request worker', () => {
 	it('test', async () => {
 		expect(true).toBe(true);
 	});
+
+	it('should handle multipart form data with valid files', async () => {
+		// Create a mock FormData with a valid image file
+		const formData = new FormData();
+		const mockFile = new File(['mock image content'], 'test.png', { type: 'image/png' });
+		formData.append('file', mockFile);
+		formData.append('prompt', 'Test prompt');
+
+		const request = new IncomingRequest('https://example.com', {
+			method: 'POST',
+			headers: {
+				'api-url': 'https://api.openai.com/v1',
+				'api-path': 'chat/completions',
+				'system-key': 'openai',
+				Origin: 'https://app.prompttoform.ai/',
+			},
+			body: formData,
+		});
+
+		// Mock the fetch to avoid actual API calls
+		const mockResponse = new Response('{"choices": [{"message": {"content": "Test response"}}]}', {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' },
+		});
+
+		// Mock fetch globally
+		global.fetch = async () => mockResponse;
+
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(200);
+	});
+
+	it('should reject invalid file types', async () => {
+		const formData = new FormData();
+		const mockFile = new File(['mock content'], 'test.txt', { type: 'text/plain' });
+		formData.append('file', mockFile);
+
+		const request = new IncomingRequest('https://example.com', {
+			method: 'POST',
+			headers: {
+				'api-url': 'https://api.openai.com/v1',
+				'api-path': 'chat/completions',
+				'system-key': 'openai',
+				Origin: 'https://app.prompttoform.ai/',
+			},
+			body: formData,
+		});
+
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(400);
+		const responseData = await response.json();
+		expect(responseData.error).toBe('Invalid file type');
+	});
+
+	it('should reject files that are too large', async () => {
+		const formData = new FormData();
+		// Create a mock file that's larger than 10MB
+		const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
+		const mockFile = new File([largeContent], 'large.pdf', { type: 'application/pdf' });
+		formData.append('file', mockFile);
+
+		const request = new IncomingRequest('https://example.com', {
+			method: 'POST',
+			headers: {
+				'api-url': 'https://api.openai.com/v1',
+				'api-path': 'chat/completions',
+				'system-key': 'openai',
+				Origin: 'https://app.prompttoform.ai/',
+			},
+			body: formData,
+		});
+
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(400);
+		const responseData = await response.json();
+		expect(responseData.error).toBe('File too large');
+	});
+
+	it('should handle JSON requests normally', async () => {
+		const request = new IncomingRequest('https://example.com', {
+			method: 'POST',
+			headers: {
+				'api-url': 'https://api.openai.com/v1',
+				'api-path': 'chat/completions',
+				'content-type': 'application/json',
+				'system-key': 'openai',
+				Origin: 'https://app.prompttoform.ai/',
+			},
+			body: JSON.stringify({ messages: [{ role: 'user', content: 'Hello' }] }),
+		});
+
+		// Mock the fetch to avoid actual API calls
+		const mockResponse = new Response('{"choices": [{"message": {"content": "Test response"}}]}', {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' },
+		});
+
+		// Mock fetch globally
+		global.fetch = async () => mockResponse;
+
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(200);
+	});
 });
