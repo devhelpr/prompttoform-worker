@@ -25,8 +25,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "form-data-db",
-			"database_id": "your-database-id-here"
+			"database_name": "prompttoform",
+			"database_id": "2a217769-ae31-4028-98b0-d9990a52970e"
 		}
 	],
 
