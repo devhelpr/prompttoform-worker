@@ -142,4 +142,47 @@ describe('Request worker', () => {
 
 		expect(response.status).toBe(200);
 	});
+
+	it('should forward form data parameters along with files', async () => {
+		const formData = new FormData();
+		const mockFile = new File(['mock image content'], 'test.png', { type: 'image/png' });
+		formData.append('file', mockFile);
+		formData.append('model', 'gpt-4');
+		formData.append('messages', JSON.stringify([{ role: 'user', content: 'Analyze this image' }]));
+		formData.append('temperature', '0.7');
+
+		const request = new IncomingRequest('https://example.com', {
+			method: 'POST',
+			headers: {
+				'api-url': 'https://api.openai.com/v1',
+				'api-path': 'chat/completions',
+				'system-key': 'openai',
+				Origin: 'https://app.prompttoform.ai/',
+			},
+			body: formData,
+		});
+
+		// Mock the fetch to capture the forwarded request
+		let capturedRequest: Request | null = null;
+		global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+			capturedRequest = input instanceof Request ? input : new Request(input, init);
+			return new Response('{"choices": [{"message": {"content": "Test response"}}]}', {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		};
+
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(200);
+		expect(capturedRequest).not.toBeNull();
+		
+		// Verify that the request was forwarded with the correct content type
+		if (capturedRequest) {
+			expect(capturedRequest.headers.get('content-type')).toContain('multipart/form-data');
+			expect(capturedRequest.method).toBe('POST');
+		}
+	});
 });

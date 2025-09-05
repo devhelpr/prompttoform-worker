@@ -108,7 +108,7 @@ export default {
 		const contentType = request.headers.get('content-type') || '';
 		const isMultipart = contentType.includes('multipart/form-data');
 
-		// Validate file types if multipart request
+		// Handle multipart form data requests
 		if (isMultipart) {
 			try {
 				// Clone the request to avoid consuming the body
@@ -156,6 +156,14 @@ export default {
 						}
 					}
 				}
+
+				// The original formData is already validated, no need to recreate it
+				// Just update the request reference to use the validated formData
+				request = new Request(request.url, {
+					method: request.method,
+					headers: request.headers,
+					body: formData,
+				});
 			} catch (error) {
 				return new Response(
 					JSON.stringify({
@@ -177,8 +185,11 @@ export default {
 
 		// Set content type based on request type
 		if (isMultipart) {
-			// For multipart requests, let the browser set the content-type with boundary
-			// Don't override it
+			// For multipart requests, preserve the original content-type with boundary
+			const originalContentType = request.headers.get('content-type');
+			if (originalContentType) {
+				headers['Content-Type'] = originalContentType;
+			}
 		} else {
 			headers['Content-Type'] = 'application/json';
 		}

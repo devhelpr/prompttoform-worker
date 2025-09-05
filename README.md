@@ -63,12 +63,17 @@ console.log(result);
 
 #### File Upload Requests (Multipart)
 
-Send files along with prompts to LLM APIs:
+Send files along with all the same parameters that JSON requests support:
 
 ```javascript
 const formData = new FormData();
 formData.append('file', pdfFile); // or imageFile
-formData.append('prompt', 'Analyze this document and summarize the key points');
+formData.append('model', 'gpt-4');
+formData.append('messages', JSON.stringify([
+  { role: 'user', content: 'Analyze this document and summarize the key points' }
+]));
+formData.append('temperature', '0.7');
+formData.append('max_tokens', '1000');
 
 const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
   method: 'POST',
@@ -86,13 +91,18 @@ console.log(result);
 
 #### Multiple Files
 
-Upload multiple files in a single request:
+Upload multiple files in a single request with all API parameters:
 
 ```javascript
 const formData = new FormData();
 formData.append('file1', pdfFile);
 formData.append('file2', imageFile);
-formData.append('prompt', 'Compare these documents and images');
+formData.append('model', 'gpt-4');
+formData.append('messages', JSON.stringify([
+  { role: 'user', content: 'Compare these documents and images' }
+]));
+formData.append('temperature', '0.5');
+formData.append('max_tokens', '2000');
 
 const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
   method: 'POST',
@@ -224,7 +234,12 @@ The proxy includes CORS headers for the following origins:
 ```javascript
 const formData = new FormData();
 formData.append('file', pdfDocument);
-formData.append('prompt', 'Extract all the key information from this document and format it as a structured summary');
+formData.append('model', 'gpt-4');
+formData.append('messages', JSON.stringify([
+  { role: 'user', content: 'Extract all the key information from this document and format it as a structured summary' }
+]));
+formData.append('temperature', '0.3');
+formData.append('max_tokens', '1500');
 
 const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
   method: 'POST',
@@ -242,7 +257,11 @@ const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
 ```javascript
 const formData = new FormData();
 formData.append('file', imageFile);
-formData.append('prompt', 'Describe this image in detail, including any text visible in the image');
+formData.append('model', 'gpt-4-vision-preview');
+formData.append('messages', JSON.stringify([
+  { role: 'user', content: 'Describe this image in detail, including any text visible in the image' }
+]));
+formData.append('max_tokens', '500');
 
 const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
   method: 'POST',
@@ -260,7 +279,12 @@ const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
 ```javascript
 const formData = new FormData();
 formData.append('file', codeFile);
-formData.append('prompt', 'Review this code for potential bugs, security issues, and suggest improvements');
+formData.append('model', 'gpt-4');
+formData.append('messages', JSON.stringify([
+  { role: 'user', content: 'Review this code for potential bugs, security issues, and suggest improvements' }
+]));
+formData.append('temperature', '0.1');
+formData.append('max_tokens', '2000');
 
 const response = await fetch('https://your-worker.your-subdomain.workers.dev', {
   method: 'POST',
