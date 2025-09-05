@@ -14,6 +14,7 @@
 import { handleNetlifyAuth, handleCodeFlowCanvasNetlifyAuth } from './netlify';
 import { handleDeployCodeFlowCanvasToNetlify } from './netlify-deploy';
 import { handleEmailFormData } from './email';
+import { handleDatabaseRequest } from './database-api';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -42,6 +43,11 @@ export default {
 		// Route to email form data handler
 		if (path === '/email/form-data') {
 			return handleEmailFormData(request, env);
+		}
+
+		// Route to database API handler
+		if (path.startsWith('/api/data')) {
+			return handleDatabaseRequest(request, env);
 		}
 
 		// Existing proxy functionality

@@ -14,6 +14,7 @@ declare namespace Cloudflare {
 		MAILRELAY_API_KEY: string;
 		MAILRELAY_DOMAIN: string;
 		ASSETS: Fetcher;
+		DB: D1Database;
 	}
 }
 interface Env extends Cloudflare.Env {}
