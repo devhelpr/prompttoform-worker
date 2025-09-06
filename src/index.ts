@@ -158,10 +158,19 @@ export default {
 				}
 
 				// The original formData is already validated, no need to recreate it
-				// Just update the request reference to use the validated formData
+				// Create a new request with the validated formData
+				// Don't set Content-Type header - let FormData set it automatically with correct boundary
+				const newHeaders = new Headers();
+				// Copy all headers except Content-Type (which will be set by FormData)
+				for (const [key, value] of request.headers.entries()) {
+					if (key.toLowerCase() !== 'content-type') {
+						newHeaders.set(key, value);
+					}
+				}
+
 				request = new Request(request.url, {
 					method: request.method,
-					headers: request.headers,
+					headers: newHeaders,
 					body: formData,
 				});
 			} catch (error) {
@@ -185,11 +194,8 @@ export default {
 
 		// Set content type based on request type
 		if (isMultipart) {
-			// For multipart requests, preserve the original content-type with boundary
-			const originalContentType = request.headers.get('content-type');
-			if (originalContentType) {
-				headers['Content-Type'] = originalContentType;
-			}
+			// For multipart requests, don't set Content-Type header
+			// Let the FormData object set the correct boundary automatically
 		} else {
 			headers['Content-Type'] = 'application/json';
 		}

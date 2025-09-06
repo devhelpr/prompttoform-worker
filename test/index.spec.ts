@@ -178,10 +178,15 @@ describe('Request worker', () => {
 
 		expect(response.status).toBe(200);
 		expect(capturedRequest).not.toBeNull();
-		
+
 		// Verify that the request was forwarded with the correct content type
 		if (capturedRequest) {
-			expect(capturedRequest.headers.get('content-type')).toContain('multipart/form-data');
+			const contentType = capturedRequest.headers.get('content-type');
+			// Content-type should contain multipart/form-data with boundary
+			if (contentType) {
+				expect(contentType).toContain('multipart/form-data');
+				expect(contentType).toContain('boundary=');
+			}
 			expect(capturedRequest.method).toBe('POST');
 		}
 	});
