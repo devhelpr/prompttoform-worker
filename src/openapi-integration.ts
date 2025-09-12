@@ -89,13 +89,14 @@ function createOpenAPIDocumentationFunction(): any {
 		function: {
 			name: 'get_openapi_documentation',
 			description:
-				'Fetch OpenAPI/Swagger documentation from a URL. Use this when you need to understand an API specification, endpoints, parameters, or schemas.',
+				"Fetch OpenAPI/Swagger documentation from a URL. Use this when you need to understand an API specification, endpoints, parameters, or schemas. Extract URLs from the user's message or conversation context.",
 			parameters: {
 				type: 'object',
 				properties: {
 					url: {
 						type: 'string',
-						description: 'The URL of the OpenAPI/Swagger specification (JSON or YAML format)',
+						description:
+							"The URL of the OpenAPI/Swagger specification (JSON or YAML format). Extract this URL from the user's message or conversation context.",
 					},
 					format: {
 						type: 'string',
@@ -121,14 +122,6 @@ export async function processLLMRequestWithOpenAPI(requestBody: string): Promise
 
 		if (!openApiConfig || !openApiConfig.useOpenAPITool) {
 			// No OpenAPI tool requested, but still remove the useOpenAPITool parameter
-			delete requestData.useOpenAPITool;
-			return JSON.stringify(requestData);
-		}
-
-		const openApiUrls = openApiConfig.openApiUrls || [];
-
-		if (openApiUrls.length === 0) {
-			console.warn('useOpenAPITool is true but no openApiUrls provided');
 			delete requestData.useOpenAPITool;
 			return JSON.stringify(requestData);
 		}

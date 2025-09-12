@@ -100,7 +100,6 @@ describe('System Message Handling', () => {
 			],
 			useOpenAPITool: {
 				useOpenAPITool: false,
-				openApiUrls: ['https://api.example.com/openapi.json'],
 			},
 		});
 

@@ -15,7 +15,6 @@ describe('On-Demand OpenAPI Documentation', () => {
 				messages: [{ role: 'user', content: 'Hello' }],
 				useOpenAPITool: {
 					useOpenAPITool: true,
-					openApiUrls: ['https://api.example.com/openapi.json'],
 				},
 			});
 
@@ -36,7 +35,6 @@ describe('On-Demand OpenAPI Documentation', () => {
 				messages: [{ role: 'user', content: 'Hello' }],
 				useOpenAPITool: {
 					useOpenAPITool: false,
-					openApiUrls: ['https://api.example.com/openapi.json'],
 				},
 			});
 

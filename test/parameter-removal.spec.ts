@@ -8,7 +8,6 @@ describe('Parameter Removal', () => {
 			messages: [{ role: 'user', content: 'Hello' }],
 			useOpenAPITool: {
 				useOpenAPITool: true,
-				openApiUrls: ['https://api.example.com/openapi.json'],
 			},
 		});
 
@@ -29,7 +28,6 @@ describe('Parameter Removal', () => {
 			messages: [{ role: 'user', content: 'Hello' }],
 			useOpenAPITool: {
 				useOpenAPITool: false,
-				openApiUrls: ['https://api.example.com/openapi.json'],
 			},
 		});
 
@@ -51,7 +49,6 @@ describe('Parameter Removal', () => {
 			max_tokens: 1000,
 			useOpenAPITool: {
 				useOpenAPITool: true,
-				openApiUrls: ['https://api.example.com/openapi.json'],
 			},
 		});
 
@@ -74,7 +71,6 @@ describe('Parameter Removal', () => {
 			messages: [{ role: 'user', content: 'Hello' }],
 			useOpenAPITool: {
 				useOpenAPITool: true,
-				openApiUrls: ['https://api.example.com/openapi.json'],
 				someOtherProperty: 'should be removed with the whole object',
 			},
 		});
