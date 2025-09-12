@@ -105,7 +105,18 @@ describe('System Message Handling', () => {
 		});
 
 		const result = await processLLMRequestWithOpenAPI(requestBody);
-		expect(result).toBe(requestBody);
+		const resultData = JSON.parse(result);
+
+		// Should remove useOpenAPITool parameter
+		expect(resultData.useOpenAPITool).toBeUndefined();
+		// Should preserve messages exactly
+		expect(resultData.messages).toHaveLength(2);
+		expect(resultData.messages[0].role).toBe('system');
+		expect(resultData.messages[0].content).toBe('You are a specialized API documentation assistant.');
+		expect(resultData.messages[1].role).toBe('user');
+		expect(resultData.messages[1].content).toBe('Hello');
+		// Should not add any tools
+		expect(resultData.tools).toBeUndefined();
 	});
 
 	it('should preserve the original system message content exactly', async () => {

@@ -41,7 +41,15 @@ describe('On-Demand OpenAPI Documentation', () => {
 			});
 
 			const result = await processLLMRequestWithOpenAPI(requestBody);
-			expect(result).toBe(requestBody);
+			const resultData = JSON.parse(result);
+
+			// Should remove useOpenAPITool parameter
+			expect(resultData.useOpenAPITool).toBeUndefined();
+			// Should not add any tools
+			expect(resultData.tools).toBeUndefined();
+			// Should preserve other data
+			expect(resultData.messages).toHaveLength(1);
+			expect(resultData.messages[0].role).toBe('user');
 		});
 
 		it('should preserve existing tools when adding OpenAPI function', async () => {

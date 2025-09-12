@@ -239,8 +239,10 @@ export default {
 					const processedBody = await processLLMRequestWithOpenAPI(bodyText);
 					requestBody = processedBody;
 				} else {
-					// Use original body text if no OpenAPI processing needed
-					requestBody = bodyText;
+					// Remove useOpenAPITool parameter even if not processing
+					const requestData = JSON.parse(bodyText);
+					delete requestData.useOpenAPITool;
+					requestBody = JSON.stringify(requestData);
 				}
 			} catch (error) {
 				console.error('Error processing request body for OpenAPI integration:', error);

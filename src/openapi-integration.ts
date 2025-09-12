@@ -120,15 +120,17 @@ export async function processLLMRequestWithOpenAPI(requestBody: string): Promise
 		const openApiConfig: OpenAPIToolConfig = requestData.useOpenAPITool;
 
 		if (!openApiConfig || !openApiConfig.useOpenAPITool) {
-			// No OpenAPI tool requested, return original body
-			return requestBody;
+			// No OpenAPI tool requested, but still remove the useOpenAPITool parameter
+			delete requestData.useOpenAPITool;
+			return JSON.stringify(requestData);
 		}
 
 		const openApiUrls = openApiConfig.openApiUrls || [];
 
 		if (openApiUrls.length === 0) {
 			console.warn('useOpenAPITool is true but no openApiUrls provided');
-			return requestBody;
+			delete requestData.useOpenAPITool;
+			return JSON.stringify(requestData);
 		}
 
 		// Initialize tools array if it doesn't exist
