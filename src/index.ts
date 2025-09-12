@@ -291,9 +291,10 @@ export default {
 				try {
 					const responseText = await response.text();
 					const responseData = JSON.parse(responseText);
+					console.log('responseData:', responseData.choices?.[0]?.message?.tool_calls?.length ?? -1);
 
 					// Check if the response contains tool calls
-					if (responseData.choices && responseData.choices[0]?.message?.tool_calls) {
+					if (responseData.choices && responseData.choices[0]?.message?.tool_calls?.length > 0) {
 						console.log('LLM response contains tool calls, executing...');
 
 						const toolCalls = responseData.choices[0].message.tool_calls;

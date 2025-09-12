@@ -140,6 +140,8 @@ export async function processLLMRequestWithOpenAPI(requestBody: string): Promise
 		// Remove the useOpenAPITool config from the request before sending to LLM
 		delete requestData.useOpenAPITool;
 
+		console.log('processLLMRequestWithOpenAPI request data:', requestData);
+
 		return JSON.stringify(requestData);
 	} catch (error) {
 		console.error('Error processing LLM request with OpenAPI:', error);
