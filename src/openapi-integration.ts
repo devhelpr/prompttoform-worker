@@ -113,18 +113,20 @@ function createOpenAPIDocumentationFunction(): any {
 /**
  * Processes LLM request body to integrate OpenAPI tool if requested
  */
-export async function processLLMRequestWithOpenAPI(requestBody: string): Promise<string> {
+export function processLLMRequestWithOpenAPI(requestBody: string): string {
 	try {
 		const requestData: LLMRequest = JSON.parse(requestBody);
 
-		// Check if useOpenAPITool is present and true
-		const openApiConfig: OpenAPIToolConfig = requestData.useOpenAPITool;
+		console.log('processLLMRequestWithOpenAPI 1:');
 
-		if (!openApiConfig || !openApiConfig.useOpenAPITool) {
-			// No OpenAPI tool requested, but still remove the useOpenAPITool parameter
-			delete requestData.useOpenAPITool;
-			return JSON.stringify(requestData);
-		}
+		// Check if useOpenAPITool is present and true
+		// const openApiConfig: OpenAPIToolConfig = requestData.useOpenAPITool;
+
+		// if (!openApiConfig || !openApiConfig.useOpenAPITool) {
+		// 	// No OpenAPI tool requested, but still remove the useOpenAPITool parameter
+		// 	delete requestData.useOpenAPITool;
+		// 	return JSON.stringify(requestData);
+		// }
 
 		// Initialize tools array if it doesn't exist
 		if (!requestData.tools) {
@@ -134,6 +136,8 @@ export async function processLLMRequestWithOpenAPI(requestBody: string): Promise
 		// Add the OpenAPI documentation function
 		const openApiFunction = createOpenAPIDocumentationFunction();
 		requestData.tools.push(openApiFunction);
+
+		console.log('processLLMRequestWithOpenAPI 2:', requestData.tools);
 
 		// No need to modify system messages - the function is already defined in the tools array
 

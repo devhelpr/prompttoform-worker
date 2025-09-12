@@ -236,7 +236,7 @@ export default {
 				// Check if OpenAPI tool integration is requested
 				if (hasOpenAPIToolConfig(bodyText)) {
 					console.log('OpenAPI tool integration requested, processing...');
-					const processedBody = await processLLMRequestWithOpenAPI(bodyText);
+					const processedBody = processLLMRequestWithOpenAPI(bodyText);
 					requestBody = processedBody;
 				} else {
 					// Remove useOpenAPITool parameter even if not processing
