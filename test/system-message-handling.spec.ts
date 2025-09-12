@@ -114,8 +114,9 @@ describe('System Message Handling', () => {
 		expect(resultData.messages[0].content).toBe('You are a specialized API documentation assistant.');
 		expect(resultData.messages[1].role).toBe('user');
 		expect(resultData.messages[1].content).toBe('Hello');
-		// Should not add any tools
-		expect(resultData.tools).toBeUndefined();
+		// Should still add the OpenAPI tool (since conditional logic is handled outside this function)
+		expect(resultData.tools).toHaveLength(1);
+		expect(resultData.tools[0].function.name).toBe('get_openapi_documentation');
 	});
 
 	it('should preserve the original system message content exactly', async () => {

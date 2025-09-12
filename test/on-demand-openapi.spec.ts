@@ -43,8 +43,9 @@ describe('On-Demand OpenAPI Documentation', () => {
 
 			// Should remove useOpenAPITool parameter
 			expect(resultData.useOpenAPITool).toBeUndefined();
-			// Should not add any tools
-			expect(resultData.tools).toBeUndefined();
+			// Should still add the OpenAPI tool (since conditional logic is handled outside this function)
+			expect(resultData.tools).toHaveLength(1);
+			expect(resultData.tools[0].function.name).toBe('get_openapi_documentation');
 			// Should preserve other data
 			expect(resultData.messages).toHaveLength(1);
 			expect(resultData.messages[0].role).toBe('user');

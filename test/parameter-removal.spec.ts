@@ -37,8 +37,9 @@ describe('Parameter Removal', () => {
 		// Should not contain useOpenAPITool parameter
 		expect(resultData.useOpenAPITool).toBeUndefined();
 
-		// Should not contain any tools
-		expect(resultData.tools).toBeUndefined();
+		// Should still add the OpenAPI tool (since conditional logic is handled outside this function)
+		expect(resultData.tools).toHaveLength(1);
+		expect(resultData.tools[0].function.name).toBe('get_openapi_documentation');
 	});
 
 	it('should preserve other parameters while removing useOpenAPITool', async () => {
@@ -96,11 +97,12 @@ describe('Parameter Removal', () => {
 		const result = await processLLMRequestWithOpenAPI(requestBody);
 		const resultData = JSON.parse(result);
 
-		// Should return original request unchanged
+		// Should preserve original parameters and add OpenAPI tool
 		expect(resultData.model).toBe('gpt-4o-mini');
 		expect(resultData.temperature).toBe(0.7);
 		expect(resultData.messages).toHaveLength(1);
 		expect(resultData.useOpenAPITool).toBeUndefined();
-		expect(resultData.tools).toBeUndefined();
+		expect(resultData.tools).toHaveLength(1);
+		expect(resultData.tools[0].function.name).toBe('get_openapi_documentation');
 	});
 });
