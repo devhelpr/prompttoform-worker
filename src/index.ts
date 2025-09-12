@@ -223,13 +223,12 @@ export default {
 		console.log(`${apiUrl} - ${pathSegment}`);
 
 		// Process request body for OpenAPI tool integration
-		let requestBody: BodyInit | null = request.body;
+		let requestBody: BodyInit | null = null;
 		let originalRequestData: any = null;
 		if (request.method === 'POST' && !isMultipart && request.body) {
 			try {
-				// Clone the request to read the body without consuming it
-				const clonedRequest = request.clone();
-				const bodyText = await clonedRequest.text();
+				// Read the request body once
+				const bodyText = await request.text();
 
 				// Store original request data for later use
 				originalRequestData = JSON.parse(bodyText);
@@ -239,11 +238,31 @@ export default {
 					console.log('OpenAPI tool integration requested, processing...');
 					const processedBody = await processLLMRequestWithOpenAPI(bodyText);
 					requestBody = processedBody;
+				} else {
+					// Use original body text if no OpenAPI processing needed
+					requestBody = bodyText;
 				}
 			} catch (error) {
 				console.error('Error processing request body for OpenAPI integration:', error);
-				// Continue with original body if processing fails
+				// If processing fails, we can't recover the original body
+				// Return an error response
+				return new Response(
+					JSON.stringify({
+						error: 'Failed to process request body',
+						message: 'Unable to read or process the request body',
+					}),
+					{
+						status: 400,
+						headers: {
+							'Content-Type': 'application/json',
+							...corsHeaders,
+						},
+					}
+				);
 			}
+		} else {
+			// For non-POST requests or multipart requests, use original body
+			requestBody = request.body;
 		}
 
 		const proxyRequest = new Request(`${apiUrl}${pathSegment}`, {
