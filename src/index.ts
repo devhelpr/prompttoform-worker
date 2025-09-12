@@ -15,6 +15,8 @@ import { handleNetlifyAuth, handleCodeFlowCanvasNetlifyAuth } from './netlify';
 import { handleDeployCodeFlowCanvasToNetlify } from './netlify-deploy';
 import { handleEmailFormData } from './email';
 import { handleDatabaseRequest } from './database-api';
+import { handleOpenAPIRequest } from './openapi';
+import { processLLMRequestWithOpenAPI, hasOpenAPIToolConfig, executeAPICall } from './openapi-integration';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -48,6 +50,11 @@ export default {
 		// Route to database API handler
 		if (path.startsWith('/api/data')) {
 			return handleDatabaseRequest(request, env);
+		}
+
+		// Route to OpenAPI/Swagger handler
+		if (path === '/api/openapi' || path === '/api/swagger') {
+			return handleOpenAPIRequest(request, env);
 		}
 
 		// Existing proxy functionality
@@ -214,10 +221,35 @@ export default {
 			pathSegment = pathSegment.slice(1);
 		}
 		console.log(`${apiUrl} - ${pathSegment}`);
+
+		// Process request body for OpenAPI tool integration
+		let requestBody: BodyInit | null = request.body;
+		let originalRequestData: any = null;
+		if (request.method === 'POST' && !isMultipart && request.body) {
+			try {
+				// Clone the request to read the body without consuming it
+				const clonedRequest = request.clone();
+				const bodyText = await clonedRequest.text();
+
+				// Store original request data for later use
+				originalRequestData = JSON.parse(bodyText);
+
+				// Check if OpenAPI tool integration is requested
+				if (hasOpenAPIToolConfig(bodyText)) {
+					console.log('OpenAPI tool integration requested, processing...');
+					const processedBody = await processLLMRequestWithOpenAPI(bodyText);
+					requestBody = processedBody;
+				}
+			} catch (error) {
+				console.error('Error processing request body for OpenAPI integration:', error);
+				// Continue with original body if processing fails
+			}
+		}
+
 		const proxyRequest = new Request(`${apiUrl}${pathSegment}`, {
 			method: request.method,
 			headers,
-			body: request.body,
+			body: requestBody,
 		});
 
 		try {
@@ -231,6 +263,94 @@ export default {
 				});
 				return new Response('Error connecting to AI Gateway', { status: 502 });
 			});
+
+			// Check if this is an LLM response with tool calls that need to be executed
+			const contentType = response.headers.get('content-type') || '';
+			if (contentType.includes('application/json') && request.method === 'POST') {
+				try {
+					const responseText = await response.text();
+					const responseData = JSON.parse(responseText);
+
+					// Check if the response contains tool calls
+					if (responseData.choices && responseData.choices[0]?.message?.tool_calls) {
+						console.log('LLM response contains tool calls, executing...');
+
+						const toolCalls = responseData.choices[0].message.tool_calls;
+						const toolResults = [];
+
+						// Execute each tool call
+						for (const toolCall of toolCalls) {
+							if (toolCall.function && toolCall.function.name === 'get_openapi_documentation') {
+								try {
+									const functionName = toolCall.function.name;
+									const arguments_ = JSON.parse(toolCall.function.arguments);
+
+									const result = await executeAPICall(functionName, arguments_);
+									toolResults.push({
+										tool_call_id: toolCall.id,
+										role: 'tool',
+										name: functionName,
+										content: JSON.stringify(result),
+									});
+								} catch (error) {
+									console.error('Error executing tool call:', error);
+									toolResults.push({
+										tool_call_id: toolCall.id,
+										role: 'tool',
+										name: toolCall.function.name,
+										content: JSON.stringify({
+											success: false,
+											error: error instanceof Error ? error.message : 'Unknown error',
+										}),
+									});
+								}
+							}
+						}
+
+						// If we have tool results, we need to make another request to the LLM with the results
+						if (toolResults.length > 0) {
+							console.log(`Executed ${toolResults.length} tool calls, sending results back to LLM`);
+
+							// Add tool results to the conversation
+							const followUpRequest = {
+								...originalRequestData,
+								messages: [...originalRequestData.messages, responseData.choices[0].message, ...toolResults],
+							};
+
+							// Remove the useOpenAPITool config for the follow-up request
+							delete followUpRequest.useOpenAPITool;
+
+							// Make follow-up request to LLM
+							const followUpResponse = await fetch(proxyRequest.url, {
+								method: 'POST',
+								headers: proxyRequest.headers,
+								body: JSON.stringify(followUpRequest),
+							});
+
+							return new Response(followUpResponse.body, {
+								status: followUpResponse.status,
+								headers: {
+									'Content-Type': followUpResponse.headers.get('Content-Type') || 'application/json',
+									...corsHeaders,
+								},
+							});
+						}
+					}
+
+					// Return original response if no tool calls or no OpenAPI tools
+					return new Response(responseText, {
+						status: response.status,
+						headers: {
+							'Content-Type': response.headers.get('Content-Type') || 'application/json',
+							...corsHeaders,
+						},
+					});
+				} catch (error) {
+					console.error('Error processing LLM response:', error);
+					// Return original response if processing fails
+				}
+			}
+
 			return new Response(response.body, {
 				status: response.status,
 				headers: {

@@ -1,0 +1,19 @@
+---
+description: rules for api's
+globs:
+alwaysApply: true
+---
+
+- when creating api use RESTful API design
+- when creating api use POST, GET, PUT, DELETE methods
+- when creating api use JSON format
+- when creating api use HTTP status codes
+- when creating api use API documentation
+- when creating api use API testing
+
+- when implementing api use CQRS pattern
+- when implementing api use DDD pattern
+- when implementing api use Clean Architecture pattern
+- when implementing api use SOLID principles
+
+- give security best practices advice
