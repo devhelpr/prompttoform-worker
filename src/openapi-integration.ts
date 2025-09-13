@@ -136,7 +136,7 @@ export function processLLMRequestWithOpenAPI(requestBody: string): string {
 		// Add the OpenAPI documentation function
 		const openApiFunction = createOpenAPIDocumentationFunction();
 		requestData.tools.push(openApiFunction);
-
+		requestData.tool_choice = 'auto';
 		console.log('processLLMRequestWithOpenAPI 2:', requestData.tools?.length ?? -1);
 
 		// No need to modify system messages - the function is already defined in the tools array
