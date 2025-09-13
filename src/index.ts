@@ -358,10 +358,9 @@ export default {
 							});
 						}
 					}
-					responseData.orgBody = requestBody;
 
 					// Return original response if no tool calls or no OpenAPI tools
-					return new Response(responseData, {
+					return new Response(responseText, {
 						status: response.status,
 						headers: {
 							'Content-Type': response.headers.get('Content-Type') || 'application/json',
