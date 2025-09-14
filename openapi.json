@@ -1,0 +1,982 @@
+{
+	"openapi": "3.0.3",
+	"info": {
+		"title": "Form Generator Worker API",
+		"description": "A Cloudflare Worker that provides form generation, email handling, database operations, and LLM proxy functionality with OpenAPI integration.",
+		"version": "1.0.0",
+		"contact": {
+			"name": "Form Generator Worker",
+			"url": "https://github.com/your-org/form-generator-worker"
+		}
+	},
+	"servers": [
+		{
+			"url": "https://form-generator-worker.maikel-f16.workers.dev",
+			"description": "Production server"
+		},
+		{
+			"url": "http://localhost:8787",
+			"description": "Development server"
+		}
+	],
+	"paths": {
+		"/openapi": {
+			"get": {
+				"summary": "Get OpenAPI specification",
+				"description": "Returns the OpenAPI specification for this API in JSON format.",
+				"operationId": "getOpenAPISpec",
+				"responses": {
+					"200": {
+						"description": "OpenAPI specification",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/openapi": {
+			"get": {
+				"summary": "Fetch external OpenAPI specification",
+				"description": "Fetches and returns an OpenAPI/Swagger specification from a provided URL.",
+				"operationId": "fetchOpenAPISpec",
+				"parameters": [
+					{
+						"name": "url",
+						"in": "query",
+						"required": true,
+						"description": "URL of the OpenAPI/Swagger specification to fetch",
+						"schema": {
+							"type": "string",
+							"format": "uri"
+						}
+					},
+					{
+						"name": "format",
+						"in": "query",
+						"required": false,
+						"description": "Expected format of the specification (json or yaml)",
+						"schema": {
+							"type": "string",
+							"enum": ["json", "yaml"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OpenAPI specification fetched successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object"
+								}
+							},
+							"application/yaml": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid URL or parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"502": {
+						"description": "Bad gateway - failed to fetch the specification",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/swagger": {
+			"get": {
+				"summary": "Fetch external Swagger specification",
+				"description": "Alias for /api/openapi endpoint for Swagger 2.x specifications.",
+				"operationId": "fetchSwaggerSpec",
+				"parameters": [
+					{
+						"name": "url",
+						"in": "query",
+						"required": true,
+						"description": "URL of the Swagger specification to fetch",
+						"schema": {
+							"type": "string",
+							"format": "uri"
+						}
+					},
+					{
+						"name": "format",
+						"in": "query",
+						"required": false,
+						"description": "Expected format of the specification (json or yaml)",
+						"schema": {
+							"type": "string",
+							"enum": ["json", "yaml"]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Swagger specification fetched successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object"
+								}
+							},
+							"application/yaml": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid URL or parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"502": {
+						"description": "Bad gateway - failed to fetch the specification",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/email/form-data": {
+			"post": {
+				"summary": "Send form data via email",
+				"description": "Sends form data to a specified email address using Mailrelay API.",
+				"operationId": "sendEmailFormData",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EmailRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Email sent successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/EmailResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid email data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error - email sending failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"options": {
+				"summary": "CORS preflight for email endpoint",
+				"operationId": "emailOptions",
+				"responses": {
+					"204": {
+						"description": "CORS preflight successful"
+					}
+				}
+			}
+		},
+		"/api/data": {
+			"get": {
+				"summary": "Get form data",
+				"description": "Retrieves form data from the database. Supports filtering by form ID.",
+				"operationId": "getFormData",
+				"parameters": [
+					{
+						"name": "formId",
+						"in": "query",
+						"required": false,
+						"description": "Filter by specific form ID",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Form data retrieved successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FormDataResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"summary": "Store form data",
+				"description": "Stores new form data in the database.",
+				"operationId": "storeFormData",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FormData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Form data stored successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FormDataResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid form data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"summary": "Update form data",
+				"description": "Updates existing form data in the database.",
+				"operationId": "updateFormData",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FormData"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Form data updated successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FormDataResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid form data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Form data not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"summary": "Delete form data",
+				"description": "Deletes form data from the database.",
+				"operationId": "deleteFormData",
+				"parameters": [
+					{
+						"name": "formId",
+						"in": "query",
+						"required": true,
+						"description": "ID of the form data to delete",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Form data deleted successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FormDataResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - missing form ID",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Form data not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"options": {
+				"summary": "CORS preflight for data API",
+				"operationId": "dataOptions",
+				"responses": {
+					"204": {
+						"description": "CORS preflight successful"
+					}
+				}
+			}
+		},
+		"/netlify": {
+			"get": {
+				"summary": "Netlify OAuth authentication",
+				"description": "Handles Netlify OAuth authentication flow.",
+				"operationId": "netlifyAuth",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"required": false,
+						"description": "Authorization code from Netlify OAuth",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"302": {
+						"description": "Redirect to Netlify OAuth or success page"
+					},
+					"400": {
+						"description": "Bad request - invalid OAuth parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/netlify/code-flow-canvas": {
+			"get": {
+				"summary": "Code Flow Canvas Netlify OAuth",
+				"description": "Handles Netlify OAuth authentication for Code Flow Canvas.",
+				"operationId": "codeFlowCanvasNetlifyAuth",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"required": false,
+						"description": "Authorization code from Netlify OAuth",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"302": {
+						"description": "Redirect to Netlify OAuth or success page"
+					},
+					"400": {
+						"description": "Bad request - invalid OAuth parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/netlify/deploy-code-flow-canvas": {
+			"post": {
+				"summary": "Deploy Code Flow Canvas to Netlify",
+				"description": "Deploys Code Flow Canvas project to Netlify.",
+				"operationId": "deployCodeFlowCanvas",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"projectData": {
+										"type": "object",
+										"description": "Project data to deploy"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Deployment successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"success": {
+											"type": "boolean"
+										},
+										"url": {
+											"type": "string",
+											"format": "uri"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid deployment data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error - deployment failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/netlify/auth-prompttoform": {
+			"get": {
+				"summary": "PromptToForm Netlify OAuth",
+				"description": "Handles Netlify OAuth authentication for PromptToForm.",
+				"operationId": "promptToFormNetlifyAuth",
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"required": false,
+						"description": "Authorization code from Netlify OAuth",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"302": {
+						"description": "Redirect to Netlify OAuth or success page"
+					},
+					"400": {
+						"description": "Bad request - invalid OAuth parameters",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/netlify/deploy-form-preview": {
+			"post": {
+				"summary": "Deploy form preview to Netlify",
+				"description": "Deploys a form preview to Netlify.",
+				"operationId": "deployFormPreview",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"formData": {
+										"type": "object",
+										"description": "Form data to preview"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Deployment successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"success": {
+											"type": "boolean"
+										},
+										"url": {
+											"type": "string",
+											"format": "uri"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid form data",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error - deployment failed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/proxy": {
+			"post": {
+				"summary": "LLM Proxy with OpenAPI Integration",
+				"description": "Proxies requests to LLM APIs (OpenAI, Gemini, etc.) with optional OpenAPI tool integration for dynamic API documentation fetching.",
+				"operationId": "proxyLLMRequest",
+				"parameters": [
+					{
+						"name": "api-url",
+						"in": "header",
+						"required": true,
+						"description": "Target LLM API URL",
+						"schema": {
+							"type": "string",
+							"format": "uri"
+						}
+					},
+					{
+						"name": "api-path",
+						"in": "header",
+						"required": true,
+						"description": "API path (use '-' for root path)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "Authorization",
+						"in": "header",
+						"required": false,
+						"description": "API authorization token",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "system-key",
+						"in": "header",
+						"required": false,
+						"description": "System key for automatic API key injection (openai, gemini)",
+						"schema": {
+							"type": "string",
+							"enum": ["openai", "gemini"]
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"model": {
+										"type": "string",
+										"description": "LLM model to use"
+									},
+									"messages": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"role": {
+													"type": "string",
+													"enum": ["system", "user", "assistant", "tool"]
+												},
+												"content": {
+													"type": "string"
+												}
+											}
+										}
+									},
+									"tools": {
+										"type": "array",
+										"description": "Available tools for the LLM",
+										"items": {
+											"type": "object"
+										}
+									},
+									"useOpenAPITool": {
+										"type": "object",
+										"description": "Configuration for OpenAPI tool integration",
+										"properties": {
+											"useOpenAPITool": {
+												"type": "boolean",
+												"description": "Enable OpenAPI tool integration"
+											}
+										}
+									},
+									"temperature": {
+										"type": "number",
+										"minimum": 0,
+										"maximum": 2
+									},
+									"max_tokens": {
+										"type": "integer",
+										"minimum": 1
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "LLM response with optional tool calls",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"choices": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"message": {
+														"type": "object",
+														"properties": {
+															"role": {
+																"type": "string"
+															},
+															"content": {
+																"type": "string"
+															},
+															"tool_calls": {
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"id": {
+																			"type": "string"
+																		},
+																		"type": {
+																			"type": "string"
+																		},
+																		"function": {
+																			"type": "object",
+																			"properties": {
+																				"name": {
+																					"type": "string"
+																				},
+																				"arguments": {
+																					"type": "string"
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request - invalid LLM request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden - invalid origin",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Internal server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								}
+							}
+						}
+					}
+				}
+			},
+			"options": {
+				"summary": "CORS preflight for proxy",
+				"operationId": "proxyOptions",
+				"responses": {
+					"204": {
+						"description": "CORS preflight successful"
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"Error": {
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"description": "Error type"
+					},
+					"message": {
+						"type": "string",
+						"description": "Error message"
+					},
+					"success": {
+						"type": "boolean",
+						"description": "Success status"
+					}
+				},
+				"required": ["error", "message"]
+			},
+			"EmailRequest": {
+				"type": "object",
+				"properties": {
+					"to": {
+						"type": "string",
+						"format": "email",
+						"description": "Recipient email address"
+					},
+					"subject": {
+						"type": "string",
+						"description": "Email subject"
+					},
+					"formData": {
+						"type": "object",
+						"description": "Form data to send",
+						"additionalProperties": true
+					},
+					"from": {
+						"type": "string",
+						"format": "email",
+						"description": "Sender email address"
+					}
+				},
+				"required": ["to", "formData"]
+			},
+			"EmailResponse": {
+				"type": "object",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Whether the email was sent successfully"
+					},
+					"message": {
+						"type": "string",
+						"description": "Response message"
+					},
+					"messageId": {
+						"type": "string",
+						"description": "Email message ID"
+					}
+				},
+				"required": ["success", "message"]
+			},
+			"FormData": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Unique form data ID"
+					},
+					"formId": {
+						"type": "string",
+						"description": "Form identifier"
+					},
+					"data": {
+						"type": "object",
+						"description": "Form data content",
+						"additionalProperties": true
+					},
+					"timestamp": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Creation timestamp"
+					}
+				},
+				"required": ["formId", "data"]
+			},
+			"FormDataResponse": {
+				"type": "object",
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"description": "Whether the operation was successful"
+					},
+					"message": {
+						"type": "string",
+						"description": "Response message"
+					},
+					"data": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/FormData"
+						},
+						"description": "Form data array"
+					}
+				},
+				"required": ["success", "message"]
+			}
+		}
+	}
+}

@@ -17,3 +17,5 @@ alwaysApply: true
 - when implementing api use SOLID principles
 
 - give security best practices advice
+
+- create and update openapi.json file for the api

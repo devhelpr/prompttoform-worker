@@ -17,6 +17,7 @@ import { handleEmailFormData } from './email';
 import { handleDatabaseRequest } from './database-api';
 import { handleOpenAPIRequest } from './openapi';
 import { processLLMRequestWithOpenAPI, hasOpenAPIToolConfig, executeAPICall } from './openapi-integration';
+import openApiSpec from '../openapi.json';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -55,6 +56,29 @@ export default {
 		// Route to OpenAPI/Swagger handler
 		if (path === '/api/openapi' || path === '/api/swagger') {
 			return handleOpenAPIRequest(request, env);
+		}
+
+		// Route to serve our own OpenAPI specification
+		if (path === '/openapi') {
+			if (request.method === 'OPTIONS') {
+				return new Response(null, {
+					status: 204,
+					headers: {
+						'Access-Control-Allow-Origin': '*',
+						'Access-Control-Allow-Headers': '*',
+						'Access-Control-Allow-Methods': 'GET, OPTIONS',
+					},
+				});
+			}
+
+			return new Response(JSON.stringify(openApiSpec), {
+				headers: {
+					'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin': '*',
+					'Access-Control-Allow-Headers': '*',
+					'Access-Control-Allow-Methods': 'GET, OPTIONS',
+				},
+			});
 		}
 
 		// Existing proxy functionality
