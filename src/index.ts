@@ -82,7 +82,12 @@ export default {
 		}
 
 		// Existing proxy functionality
-		const allowedOrigin = ['https://app.prompttoform.ai/', 'https://demo.codeflowcanvas.io/', 'https://ocif-generator.vercel.app/'];
+		const allowedOrigin = [
+			'https://app.prompttoform.ai/',
+			'https://demo.codeflowcanvas.io/',
+			'https://ocif-generator.vercel.app/',
+			'https://codeflowcanvas.devhelpr.com',
+		];
 		const isDev = env.WRANGLER_ENV === 'dev';
 
 		const origin = request.headers.get('Origin') || '';
@@ -165,7 +170,7 @@ export default {
 										'Content-Type': 'application/json',
 										...corsHeaders,
 									},
-								}
+								},
 							);
 						}
 
@@ -182,7 +187,7 @@ export default {
 										'Content-Type': 'application/json',
 										...corsHeaders,
 									},
-								}
+								},
 							);
 						}
 					}
@@ -216,7 +221,7 @@ export default {
 							'Content-Type': 'application/json',
 							...corsHeaders,
 						},
-					}
+					},
 				);
 			}
 		}
@@ -283,7 +288,7 @@ export default {
 							'Content-Type': 'application/json',
 							...corsHeaders,
 						},
-					}
+					},
 				);
 			}
 		} else {
